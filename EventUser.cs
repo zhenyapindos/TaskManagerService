@@ -1,9 +1,13 @@
-﻿namespace StasDiplom;
+﻿using StasDiplom.Enum;
+
+namespace StasDiplom;
 
 public class EventUser
 {
-    public int Id { get; set; }
     public int EventId { get; set; }
-    public Guid UserId { get; set; }
-    public int EventRole { get; set; }
+    public string UserId { get; set; }
+    public User User { get; set; }
+    public EventRole EventRole { get; set; }
+    
+    public Event Event { get; set; }
 }

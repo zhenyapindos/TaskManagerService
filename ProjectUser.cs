@@ -1,9 +1,13 @@
-﻿namespace StasDiplom;
+﻿using Microsoft.AspNetCore.Identity;
+using StasDiplom.Enum;
+
+namespace StasDiplom;
 
 public class ProjectUser
 {
-    public int Id { get; set; }
     public int ProjectId { get; set; }
-    public Guid UserId { get; set; }
-    public int ProjectRole { get; set; }
+    public string UserId { get; set; }
+    public ProjectRole ProjectRole { get; set; }
+    public User User { get; set; }
+    public Project Project { get; set; }
 }

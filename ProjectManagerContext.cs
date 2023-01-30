@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace StasDiplom;
 
-public class ProjectManagerContext : IdentityDbContext<IdentityUser>
+public class ProjectManagerContext : IdentityDbContext<User>
 {
     public DbSet<Calendar> Calendars { get; set; }
     public DbSet<Event> Events { get; set; }
@@ -16,7 +16,29 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
     public DbSet<Comment> Comments { get; set; }
     public DbSet<CommentUserMention> CommentUserMentions { get; set; }
     public DbSet<Notification> Notifications { get; set; }
-    
+
     public ProjectManagerContext(DbContextOptions<ProjectManagerContext> options) : base(options)
-    { }
+    {
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder
+            .CommentToProject()
+            .CommentToTask()
+            .TaskToProject()
+            .ProjectToNotification()
+            .TaskToNotification()
+            .EventToCalendar()
+            .UserToComment()
+            .UserToNotification()
+            .UserToEvent()
+            .UserToTask()
+            .UserToProject()
+            .CommentToUserMention()
+            .ProjectToCalendar()
+            .TaskToEvent();
+    }
+
+    
 }

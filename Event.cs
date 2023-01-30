@@ -1,4 +1,6 @@
-﻿namespace StasDiplom;
+﻿using System.Collections;
+
+namespace StasDiplom;
 
 public class Event
 {
@@ -11,4 +13,9 @@ public class Event
     public int EventType { get; set; }
     public DateTime StartDate { get; set; }
     public double DurationHours { get; set; }
+    
+    public ICollection<User> Users { get; set; }
+    public ICollection<EventUser> EventUsers { get; set; }
+    public Calendar Calendar { get; set; }
+    public Task? Task { get; set; }
 }
