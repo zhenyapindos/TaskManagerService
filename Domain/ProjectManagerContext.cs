@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using StasDiplom.Extensions;
 
-namespace StasDiplom;
+namespace StasDiplom.Domain;
 
 public class ProjectManagerContext : IdentityDbContext<User>
 {

@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
-using StasDiplom.Enum;
+﻿using StasDiplom.Enum;
 
-namespace StasDiplom;
+namespace StasDiplom.Domain;
 
 public class TaskUser
 {

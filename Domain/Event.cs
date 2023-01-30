@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace StasDiplom;
+﻿namespace StasDiplom.Domain;
 
 public class Event
 {

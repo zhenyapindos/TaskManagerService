@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StasDiplom.Domain;
+using Task = StasDiplom.Domain.Task;
 
-namespace StasDiplom;
+namespace StasDiplom.Extensions;
 
 public static class ModelBuilderExtension
 {

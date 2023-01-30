@@ -1,6 +1,6 @@
 ﻿using StasDiplom.Enum;
 
-namespace StasDiplom;
+namespace StasDiplom.Domain;
 
 public class EventUser
 {

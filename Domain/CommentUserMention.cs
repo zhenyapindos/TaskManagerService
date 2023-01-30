@@ -1,4 +1,4 @@
-﻿namespace StasDiplom;
+﻿namespace StasDiplom.Domain;
 
 public class CommentUserMention
 {

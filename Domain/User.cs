@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace StasDiplom;
+namespace StasDiplom.Domain;
 
 public class User : IdentityUser
 {
