@@ -18,8 +18,7 @@ public class ProjectManagerContext : IdentityDbContext<User>
     public DbSet<Notification> Notifications { get; set; }
 
     public ProjectManagerContext(DbContextOptions<ProjectManagerContext> options) : base(options)
-    {
-    }
+    { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
