@@ -4,9 +4,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using StasDiplom.Domain;
 using StasDiplom.Dto.Users.Login;
+using StasDiplom.Dto.Users.Register;
+using StasDiplom.Utility;
 
-namespace StasDiplom;
+namespace StasDiplom.Controllers;
 
+[ApiController]
+[Route("api/account/")]
 public class UserController : Controller
 {
     private readonly UserManager<User> _userManager;
@@ -28,7 +32,11 @@ public class UserController : Controller
     {
         var userExists = await _userManager.FindByNameAsync(model.Username);
 
-        if (userExists != null) return Conflict();
+        if (userExists != null) return Conflict("Username");
+        
+        userExists = await _userManager.FindByEmailAsync(model.Email);
+
+        if (userExists != null) return Conflict("Email");
 
         User user = new()
         {
@@ -41,24 +49,18 @@ public class UserController : Controller
 
         var result = await _userManager.CreateAsync(user, model.Password);
 
-        if (!result.Succeeded)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
-
-        return Ok();
+        return !result.Succeeded ? StatusCode(StatusCodes.Status500InternalServerError) : Ok();
     }
     
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    [ProducesResponseType(403)]
-    [ProducesResponseType(404)]
-    [ProducesResponseType(500)]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = await _userManager.FindByNameAsync(request.Username);
-
+        var user = request.EmailOrUsername.Contains('@') 
+            ? await _userManager.FindByEmailAsync(request.EmailOrUsername)
+            : await _userManager.FindByNameAsync(request.EmailOrUsername);
+        
         if (user == null) return NotFound();
 
         var result = await _signInManager.PasswordSignInAsync(
@@ -66,8 +68,6 @@ public class UserController : Controller
             password: request.Password,
             isPersistent: false,
             lockoutOnFailure: false);
-
-        if (result.IsLockedOut) return Forbid();
 
         if (!result.Succeeded) return BadRequest();
 
@@ -83,7 +83,6 @@ public class UserController : Controller
         
         return Ok(new LoginResponse()
         {
-            
             Token = new JwtSecurityTokenHandler().WriteToken(resultToken)
         });
     }

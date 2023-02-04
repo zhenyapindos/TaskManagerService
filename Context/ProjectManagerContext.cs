@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using StasDiplom.Domain;
 using StasDiplom.Extensions;
+using Task = StasDiplom.Domain.Task;
 
-namespace StasDiplom.Domain;
+namespace StasDiplom.Context;
 
-public class ProjectManagerContext : IdentityDbContext<User>
+public class ProjectManagerContext : IdentityDbContext<IdentityUser>
 {
     public DbSet<Calendar> Calendars { get; set; }
     public DbSet<Event> Events { get; set; }
@@ -22,6 +25,8 @@ public class ProjectManagerContext : IdentityDbContext<User>
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+        
         modelBuilder
             .CommentToProject()
             .CommentToTask()

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StasDiplom.Context;
 using StasDiplom.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,7 @@ var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
     options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
+
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>
     {
@@ -22,6 +24,7 @@ builder.Services.AddIdentity<User, IdentityRole>(o =>
     })
     .AddEntityFrameworkStores<ProjectManagerContext>()
     .AddDefaultTokenProviders();
+
 
 builder.Services.AddAuthentication(options =>
 {

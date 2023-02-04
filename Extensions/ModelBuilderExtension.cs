@@ -33,7 +33,7 @@ public static class ModelBuilderExtension
         modelBuilder.Entity<Project>()
             .HasMany(t => t.Comments)
             .WithOne(t => t.Project)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.NoAction);
 
         return modelBuilder;
     }
@@ -65,7 +65,7 @@ public static class ModelBuilderExtension
         modelBuilder.Entity<Project>()
             .HasMany(n => n.Notifications)
             .WithOne(n => n.Project)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.NoAction);
 
         return modelBuilder;
     }
@@ -218,11 +218,13 @@ public static class ModelBuilderExtension
         modelBuilder.Entity<Project>()
             .HasOne(c => c.Calendar)
             .WithOne(c => c.Project)
+            .HasForeignKey<Calendar>(c => c.Id)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Calendar>()
             .HasOne(c => c.Project)
             .WithOne(c => c.Calendar)
+            .HasForeignKey<Project>(c => c.Id)
             .OnDelete(DeleteBehavior.NoAction);
 
         return modelBuilder;
