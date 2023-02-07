@@ -11,8 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
-
+    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>
     {
@@ -52,6 +51,12 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
 {
+    c.SwaggerDoc("v1", new OpenApiInfo()
+    {
+        Title = "Diploma",
+        Version = "v1"
+    });
+    
     c.ResolveConflictingActions(apiDescriptor => apiDescriptor.First());
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
@@ -82,16 +87,18 @@ var app = builder.Build();
 
 app.UseRouting();
 
+app.UseCors(x => x
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader());
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
