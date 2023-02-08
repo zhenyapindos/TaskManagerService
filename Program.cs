@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
+    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>
     {

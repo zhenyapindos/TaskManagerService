@@ -29,29 +29,41 @@ public class ProjectController : Controller
     public async Task<IActionResult> CreateProjectRequest(CreateProjectRequest projectRequest)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
-
-        var calendar = new Calendar
+        
+        /*var calendar = new Calendar
         {
             Title = projectRequest.Title + "'s calendar"
-        };
-        
+        };*/
+
         var newProject = new Project
         {
             Title = projectRequest.Title,
             Description = projectRequest.Description
+            //CalendarId = calendar.Id
         };
 
-        calendar.ProjectId = newProject.Id;
-
-        await _context.Calendars.AddAsync(calendar);
         await _context.Projects.AddAsync(newProject);
+        
+        //calendar.ProjectId = newProject.Id;
+
+        //await _context.Calendars.AddAsync(calendar);
+        
+        /*var projectUser = new ProjectUser
+        {
+            UserId = id,
+            UserProjectRole = UserProjectRole.Admin
+        };
+
+        await _context.ProjectUsers.AddAsync(projectUser);*/
+        
         await _context.SaveChangesAsync();
         
-        return Ok(projectRequest);
+        return Ok();
     }
 
     [Authorize]
     [HttpGet("")]
+    [ProducesResponseType(200)]
     public async Task<List<Project>> GetAllProjects()
     {
         //тот ли эксепшн?
