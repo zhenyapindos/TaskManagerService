@@ -210,8 +210,8 @@ public class ProjectController : Controller
         return Ok();
     }
     
-    /*[Authorize]
-    [HttpGet("{id:int}")]
+    
+    /*[HttpGet("{id:int}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
