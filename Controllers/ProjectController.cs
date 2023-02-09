@@ -211,7 +211,7 @@ public class ProjectController : Controller
     }
     
     
-    /*[HttpGet("{id:int}")]
+    /**[HttpGet("{id:int}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
