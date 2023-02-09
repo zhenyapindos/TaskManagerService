@@ -1,4 +1,5 @@
 using System.Text;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -6,12 +7,30 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StasDiplom.Context;
 using StasDiplom.Domain;
+using StasDiplom.Dto.Project.Responses;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
+    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
+
+builder.Services.AddAutoMapper(config =>
+{
+    config.CreateMap<ProjectUser, UserProjectResponse>(MemberList.Destination)
+        .ForMember(
+            x => x.Title,
+            opt =>
+                opt.MapFrom(src => src.Project.Title))
+        .ForMember(
+            x => x.Description,
+            opt =>
+                opt.MapFrom(src => src.Project.Description))
+        .ForMember(
+            x => x.Id,
+            opt =>
+                opt.MapFrom(src => src.Project.Id));
+});
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>
     {

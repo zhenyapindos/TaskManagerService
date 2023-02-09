@@ -2,9 +2,9 @@
 
 public enum TaskStatus
 {
-    Overdue,
-    InProgress,
-    Planned,
-    Created,
-    Done
+    Overdue = 0,
+    InProgress = 1,
+    Planned = 2,
+    Created = 3,
+    Done = 4
 }

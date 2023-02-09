@@ -2,8 +2,9 @@
 
 public enum UserProjectRole
 {
-    Admin,
-    Moderator,
-    Worker,
-    Invited
+    Admin = 0,
+    Moderator = 1,
+    Worker = 2,
+    Invited = 3,
+    Kicked = 4
 }

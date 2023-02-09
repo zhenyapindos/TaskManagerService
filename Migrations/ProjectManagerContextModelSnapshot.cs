@@ -412,7 +412,7 @@ namespace StasDiplom.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("int");
 
-                    b.Property<int>("CalendarId")
+                    b.Property<int?>("CalendarId")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
@@ -436,7 +436,7 @@ namespace StasDiplom.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("ProjectRole")
+                    b.Property<int>("UserProjectRole")
                         .HasColumnType("int");
 
                     b.HasKey("ProjectId", "UserId");
@@ -498,7 +498,7 @@ namespace StasDiplom.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("TaskRole")
+                    b.Property<int>("TaskStatus")
                         .HasColumnType("int");
 
                     b.HasKey("TaskId", "UserId");
