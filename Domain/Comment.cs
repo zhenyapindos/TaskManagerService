@@ -1,6 +1,6 @@
 ﻿namespace StasDiplom.Domain;
 
-public class Comment
+public record Comment
 {
     public int Id { get; set; }
     public DateTime CreationDate { get; set; }

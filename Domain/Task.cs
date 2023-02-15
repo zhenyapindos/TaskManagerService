@@ -1,6 +1,8 @@
-﻿namespace StasDiplom.Domain;
+﻿using System.Collections;
 
-public class Task
+namespace StasDiplom.Domain;
+
+public record Task
 {
     public int Id { get; set; }
     public string Title { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace StasDiplom.Domain;
 
-public class Event
+public record Event
 {
     public int Id { get; set; }
     public int CalendarId { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace StasDiplom.Domain;
 
-public class Calendar
+public record Calendar
 {
     public int Id { get; set; }
     public int? ProjectId { get; set; }

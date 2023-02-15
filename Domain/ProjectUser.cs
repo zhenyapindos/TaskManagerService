@@ -2,7 +2,7 @@
 
 namespace StasDiplom.Domain;
 
-public class ProjectUser
+public record ProjectUser
 {
     public int ProjectId { get; set; }
     public string UserId { get; set; }

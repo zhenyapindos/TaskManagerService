@@ -1,6 +1,6 @@
 ﻿namespace StasDiplom.Domain;
 
-public class Project
+public record Project
 {
     public int Id { get; set; }
     public string Title { get; set; }

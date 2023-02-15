@@ -9,8 +9,11 @@ using StasDiplom.Dto.Project;
 using StasDiplom.Dto.Project.Requests;
 using StasDiplom.Dto.Project.Responses;
 using StasDiplom.Enum;
+using StasDiplom.Extensions;
 using StasDiplom.Utility;
 using Task = System.Threading.Tasks.Task;
+using MyTask = StasDiplom.Domain.Task;
+using TaskStatus = System.Threading.Tasks.TaskStatus;
 
 namespace StasDiplom.Controllers;
 
@@ -21,14 +24,13 @@ public class ProjectController : Controller
     private readonly ProjectManagerContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
-    private readonly INotificationService _notificationService;
+    //private readonly INotificationService _notificationService;
 
-    public ProjectController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, INotificationService notificationService)
+    public ProjectController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
-        _notificationService = notificationService;
     }
 
     [Authorize]
@@ -44,12 +46,8 @@ public class ProjectController : Controller
             Title = projectRequest.Title + "'s calendar"
         };
 
-        var newProject = new Project
-        {
-            Title = projectRequest.Title,
-            Description = projectRequest.Description,
-            Calendar = calendar
-        };
+        var newProject = _mapper.Map<Project>(projectRequest);
+        newProject.Calendar = calendar;
 
         await _context.Projects.AddAsync(newProject);
 
@@ -59,17 +57,12 @@ public class ProjectController : Controller
             UserProjectRole = UserProjectRole.Admin,
             Project = newProject
         };
-
+        
         await _context.ProjectUsers.AddAsync(projectUser);
 
         await _context.SaveChangesAsync();
         
-        return Ok(new CreateProjectResponse
-        {
-            Id = newProject.Id,
-            Title = newProject.Title,
-            Description = newProject.Description
-        });
+        return Ok(_mapper.Map<CreateProjectResponse>(newProject));
     }
 
     [Authorize]
@@ -186,7 +179,9 @@ public class ProjectController : Controller
 
         if (user == null) return BadRequest();
 
-        var project = _context.Projects.Include(x => x.ProjectUsers).FirstOrDefault(x => x.Id == request.ProjectId);
+        var project = _context.Projects
+            .Include(x => x.ProjectUsers)
+            .FirstOrDefault(x => x.Id == request.ProjectId);
 
         if (project == null) return NotFound();
 
@@ -209,49 +204,134 @@ public class ProjectController : Controller
         
         return Ok();
     }
-    
-    
-    /**[HttpGet("{id:int}")]
+
+    [Authorize]
+    [HttpPut("")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> GetProjectResponse([FromBody] int projectId)
+    public async Task<IActionResult> UpdateProject(UpdateProjectRequest request)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
-        
-        var project = _context.Projects.FirstOrDefault(x => x.Id == projectId);
+
+        var project = _context.Projects
+            .Include(x => x.ProjectUsers)
+            .FirstOrDefault(y => y.Id == request.Id);
 
         if (project == null) return NotFound();
 
-        var result = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (result == null) return Forbid();
-
-        var taskShortInfoList = new List<TaskShortInfo>();
-
-        //HELP
-        foreach (var task in project.Tasks)
-        {
-            taskShortInfoList.Add(new TaskShortInfo
-            {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                Deadline = task.CreationTime,
-                TaskStatus = task.Tas
-            });
-        }
-        
-        var projectResponse = new ProjectResponse
-        {
-            Id = project.Id,
-            Title = project.Title,
-            Description = project.Description,
-            TaskList = project.Tasks,
+        var resultUser = project.ProjectUsers
+            .FirstOrDefault(x => x.UserId == id && x.UserProjectRole == UserProjectRole.Admin);
             
-        };
-        
+        if (resultUser == null) return Forbid();    
+
+        if (request.Title != null)
+        {
+            project.Title = request.Title;
+        }
+
+        if (request.Description != null)
+        {
+            project.Description = request.Description;
+        }
+
+        _context.Projects.Update(project);
+        await _context.SaveChangesAsync();
+
+        return Ok(new UpdateProjectResponse
+        {
+            Title = project.Title,
+            Description = project.Description
+        });
+    }
+
+
+    [Authorize]
+    [HttpDelete("")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> DeleteProject(DeleteRequest projectId)
+    {
+        var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+
+        var project = _context.Projects
+            .Include(x => x.ProjectUsers)
+            .FirstOrDefault(y => y.Id == projectId.Id);
+
+        if (project == null) return NotFound();
+
+        var resultUser = project.ProjectUsers
+            .FirstOrDefault(x => x.UserId == id && x.UserProjectRole == UserProjectRole.Admin);
+            
+        if (resultUser == null) return Forbid();
+
+        _context.Remove(project);
+        await _context.SaveChangesAsync();
+
         return Ok();
-    }*/
+    }
+    
+    [Authorize]
+    [HttpGet("{projectId:int}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetProject([FromRoute] int projectId)
+    {
+        var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+
+        var project = _context.Projects.Include(x => x.ProjectUsers)
+            .Include(x=> x.Tasks)
+            .FirstOrDefault(x => x.Id == projectId);
+
+        if (project == null) return NotFound();
+
+        var response = _mapper.Map<GetProjectResponse>(project);
+        
+        var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
+
+        if (resultUser == null) return Forbid();
+
+        var users = project.ProjectUsers.Join(_userManager.Users,
+            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserProjectInfo>((user, projectUser))).ToList();
+
+        response.UserList = users;
+        response.UserProjectRole = resultUser.UserProjectRole;
+        
+        return Ok(response);
+    }
+
+    [Authorize]
+    [HttpPost("/accept-invitation/{projectId:int}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> AcceptInvitation([FromRoute] int projectId)
+    {
+        var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+
+        var project = _context.Projects
+            .Include(x => x.ProjectUsers)
+            .FirstOrDefault(y => y.Id == projectId);
+
+        if (project == null) return NotFound();
+
+        var resultUser = project.ProjectUsers
+            .FirstOrDefault(x => x.UserId == id);
+            
+        if (resultUser == null) return Forbid();
+
+        if (resultUser.UserProjectRole != UserProjectRole.Invited) return BadRequest();
+
+        resultUser.UserProjectRole = UserProjectRole.Worker;
+
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
 }

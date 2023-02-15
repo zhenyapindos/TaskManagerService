@@ -1,6 +1,6 @@
 ﻿namespace StasDiplom.Domain;
 
-public class Notification
+public record Notification
 {
     public int Id { get; set; }
     public DateTime CreationDate { get; set; }

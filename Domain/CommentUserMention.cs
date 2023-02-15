@@ -1,6 +1,6 @@
 ﻿namespace StasDiplom.Domain;
 
-public class CommentUserMention
+public record CommentUserMention
 {
     public int Id { get; set; }
     public int CommentId { get; set; }

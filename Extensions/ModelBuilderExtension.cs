@@ -165,7 +165,7 @@ public static class ModelBuilderExtension
                     .HasOne(p => p.Task)
                     .WithMany(p => p.TaskUsers)
                     .HasForeignKey(p => p.TaskId)
-                    .OnDelete(DeleteBehavior.NoAction),
+                    .OnDelete(DeleteBehavior.Cascade),
                 j => j
                     .HasOne(u => u.User)
                     .WithMany(u => u.TaskUsers)
@@ -186,7 +186,7 @@ public static class ModelBuilderExtension
                     .HasOne(p => p.Project)
                     .WithMany(p => p.ProjectUsers)
                     .HasForeignKey(p => p.ProjectId)
-                    .OnDelete(DeleteBehavior.NoAction),
+                    .OnDelete(DeleteBehavior.Cascade),
                 j => j
                     .HasOne(u => u.User)
                     .WithMany(u => u.ProjectUsers)

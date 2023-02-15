@@ -7,13 +7,18 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StasDiplom.Context;
 using StasDiplom.Domain;
+using StasDiplom.Dto.Comment;
+using StasDiplom.Dto.Project;
+using StasDiplom.Dto.Project.Requests;
 using StasDiplom.Dto.Project.Responses;
+using StasDiplom.Enum;
+using Task = StasDiplom.Domain.Task;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
+    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
 
 builder.Services.AddAutoMapper(config =>
 {
@@ -30,6 +35,33 @@ builder.Services.AddAutoMapper(config =>
             x => x.Id,
             opt =>
                 opt.MapFrom(src => src.Project.Id));
+
+    config.CreateMap<Task, TaskShortInfo>(MemberList.Destination)
+        .ForMember(x => x.Deadline,
+            opt =>
+                opt.MapFrom(src => src.StartDate.Value.AddHours(src.DurationTime.Value)));
+
+    config.CreateMap<(User user, ProjectUser projectUser), UserProjectInfo>(MemberList.Destination)
+        .ForMember(x => x.FirstName,
+            opt => 
+                opt.MapFrom(src => src.user.FirstName))
+        .ForMember(x => x.LastName,
+        opt => 
+            opt.MapFrom(src => src.user.LastName))
+        .ForMember(x => x.Email,
+        opt => 
+            opt.MapFrom(src => src.user.Email))
+        .ForMember(x => x.UserProjectRole,
+            opt =>
+                opt.MapFrom(src => src.projectUser.UserProjectRole));
+
+    config.CreateMap<Project, GetProjectResponse>(MemberList.Destination);
+    
+    config.CreateMap<CreateCommentRequest, Comment>(MemberList.Source);
+    
+    config.CreateMap<Project, CreateProjectResponse>(MemberList.Destination);
+    
+    config.CreateMap<CreateProjectRequest, Project>(MemberList.Source);
 });
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>

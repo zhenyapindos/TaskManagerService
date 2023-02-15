@@ -2,7 +2,7 @@
 
 namespace StasDiplom.Domain;
 
-public class EventUser
+public record EventUser
 {
     public int EventId { get; set; }
     public string UserId { get; set; }
