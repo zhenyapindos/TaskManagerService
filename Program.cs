@@ -5,13 +5,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StasDiplom;
 using StasDiplom.Context;
 using StasDiplom.Domain;
+using StasDiplom.Dto;
 using StasDiplom.Dto.Comment;
 using StasDiplom.Dto.Project;
 using StasDiplom.Dto.Project.Requests;
 using StasDiplom.Dto.Project.Responses;
-using StasDiplom.Enum;
+using StasDiplom.Dto.Task;
+using StasDiplom.Services;
 using Task = StasDiplom.Domain.Task;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,9 +42,9 @@ builder.Services.AddAutoMapper(config =>
     config.CreateMap<Task, TaskShortInfo>(MemberList.Destination)
         .ForMember(x => x.Deadline,
             opt =>
-                opt.MapFrom(src => src.StartDate.Value.AddHours(src.DurationTime.Value)));
+                opt.MapFrom(src => src.StartDate.Value.AddHours(src.DurationHours.Value)));
 
-    config.CreateMap<(User user, ProjectUser projectUser), UserProjectInfo>(MemberList.Destination)
+    config.CreateMap<(User user, ProjectUser projectUser), UserShortInfo>(MemberList.Destination)
         .ForMember(x => x.FirstName,
             opt => 
                 opt.MapFrom(src => src.user.FirstName))
@@ -53,7 +56,27 @@ builder.Services.AddAutoMapper(config =>
             opt.MapFrom(src => src.user.Email))
         .ForMember(x => x.UserProjectRole,
             opt =>
-                opt.MapFrom(src => src.projectUser.UserProjectRole));
+                opt.MapFrom(src => src.projectUser.UserProjectRole))
+        .ForMember(x=> x.Username,
+            opt => 
+                opt.MapFrom(src => src.user.UserName));
+    
+    config.CreateMap<(User user, TaskUser taskUser), UserShortInfo>(MemberList.Destination)
+        .ForMember(x => x.FirstName,
+            opt => 
+                opt.MapFrom(src => src.user.FirstName))
+        .ForMember(x => x.LastName,
+            opt => 
+                opt.MapFrom(src => src.user.LastName))
+        .ForMember(x => x.Email,
+            opt => 
+                opt.MapFrom(src => src.user.Email))
+        .ForMember(x => x.UserProjectRole,
+            opt =>
+                opt.MapFrom(src => src.taskUser.TaskRole))
+        .ForMember(x=> x.Username,
+            opt => 
+                opt.MapFrom(src => src.user.UserName));
 
     config.CreateMap<Project, GetProjectResponse>(MemberList.Destination);
     
@@ -62,6 +85,25 @@ builder.Services.AddAutoMapper(config =>
     config.CreateMap<Project, CreateProjectResponse>(MemberList.Destination);
     
     config.CreateMap<CreateProjectRequest, Project>(MemberList.Source);
+    
+    config.CreateMap<CreateTaskRequest, Task>(MemberList.Destination);
+
+    config.CreateMap<Comment, CommentResponse>(MemberList.Destination)
+        .ForMember(x => x.UserInfo,
+            opt =>
+                opt.MapFrom(src => src.User));
+
+    config.CreateMap<User, UserShortInfo>(MemberList.Destination);
+    
+    config.CreateMap<Task, TaskShortInfo>(MemberList.Destination);
+
+    config.CreateMap<Task, TaskInfoResponse>(MemberList.Destination);
+
+    config.CreateMap<Project, ShortProjectInfo>(MemberList.Destination);
+    
+    config.CreateMap<UpdateTaskRequest, Task>(MemberList.Source);
+    
+    config.CreateMap<Notification, NotificationInfo>(MemberList.Destination);
 });
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>
@@ -133,6 +175,8 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 var app = builder.Build();
 

@@ -2,7 +2,7 @@
 
 namespace StasDiplom.Dto.Project;
 
-public record UserProjectInfo
+public record UserShortInfo
 {
     public string Email { get; set; }
     public string Username { get; set; }

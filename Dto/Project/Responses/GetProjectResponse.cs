@@ -10,6 +10,6 @@ public record GetProjectResponse
     public string Title { get; set; }
     public string Description { get; set; }
     public UserProjectRole UserProjectRole { get; set; }
-    public List<UserProjectInfo> UserList { get; set; }
+    public List<UserShortInfo> UserList { get; set; }
     public ICollection<TaskShortInfo> TaskList { get; set; }
 }

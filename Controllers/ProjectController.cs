@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client.Utils.Windows;
 using StasDiplom.Context;
 using StasDiplom.Domain;
 using StasDiplom.Dto.Project;
@@ -10,6 +11,7 @@ using StasDiplom.Dto.Project.Requests;
 using StasDiplom.Dto.Project.Responses;
 using StasDiplom.Enum;
 using StasDiplom.Extensions;
+using StasDiplom.Services;
 using StasDiplom.Utility;
 using Task = System.Threading.Tasks.Task;
 using MyTask = StasDiplom.Domain.Task;
@@ -24,13 +26,13 @@ public class ProjectController : Controller
     private readonly ProjectManagerContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
-    //private readonly INotificationService _notificationService;
-
-    public ProjectController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper)
+    private readonly INotificationService _notificationService;
+    public ProjectController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
+        _notificationService = notificationService;
     }
 
     [Authorize]
@@ -100,12 +102,16 @@ public class ProjectController : Controller
 
         if (user == null) return BadRequest();
 
-        var project = _context.Projects.Include(x => x.ProjectUsers).FirstOrDefault(x => x.Id == request.ProjectId);
+        var project = _context.Projects
+            .Include(x=> x.Notifications)
+            .FirstOrDefault(x => x.Id == request.ProjectId);
 
         if (project == null) return NotFound();
 
-        var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
-
+        var resultUser = _context.ProjectUsers
+            .AsNoTracking()
+            .FirstOrDefault(x => x.UserId == id && x.ProjectId == project.Id);
+        
         if (resultUser == null) return Forbid();
 
         var projectUser = new ProjectUser
@@ -117,9 +123,7 @@ public class ProjectController : Controller
 
         await _context.ProjectUsers.AddAsync(projectUser);
         await _context.SaveChangesAsync();
-        
-        //ToDo
-        //_notificationService.ProjectInvitation(id, projectId);
+        await _notificationService.ProjectInvitation(project, user);
         
         return Ok();
     }
@@ -155,9 +159,7 @@ public class ProjectController : Controller
         
         _context.ProjectUsers.Remove(resultUser);
         await _context.SaveChangesAsync();
-        
-        //ToDo
-        //_notificationService.ProjectInvitation(id, projectId);
+        await _notificationService.ProjectKick(project, user);
         
         return Ok();
     }
@@ -198,10 +200,7 @@ public class ProjectController : Controller
         
         _context.ProjectUsers.Update(resultUser);
         await _context.SaveChangesAsync();
-        
-        //ToDo
-        //_notificationService.ProjectInvitation(id, projectId);
-        
+
         return Ok();
     }
 
@@ -297,10 +296,16 @@ public class ProjectController : Controller
         if (resultUser == null) return Forbid();
 
         var users = project.ProjectUsers.Join(_userManager.Users,
-            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserProjectInfo>((user, projectUser))).ToList();
+            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserShortInfo>((user, projectUser))).ToList();
 
         response.UserList = users;
         response.UserProjectRole = resultUser.UserProjectRole;
+        response.TaskList = new List<TaskShortInfo>();
+
+        foreach (var task in project.Tasks)
+        {
+            response.TaskList.Add(_mapper.Map<TaskShortInfo>(task));
+        }
         
         return Ok(response);
     }
@@ -333,5 +338,31 @@ public class ProjectController : Controller
         await _context.SaveChangesAsync();
 
         return Ok();
+    }
+
+    [Authorize]
+    [HttpPost("/{projectId:int}/users")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetProjectUsers([FromRoute] int projectId)
+    {
+        var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+        
+        var project = _context.Projects
+            .Include(x => x.ProjectUsers)
+            .FirstOrDefault(x => x.Id == projectId);
+
+        if (project == null) return NotFound();
+
+        var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
+
+        if (resultUser == null) return Forbid();
+        
+        var users = project.ProjectUsers.Join(_userManager.Users,
+            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserShortInfo>((user, projectUser))).ToList();
+
+        return Ok(users);
     }
 }

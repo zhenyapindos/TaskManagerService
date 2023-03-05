@@ -197,22 +197,6 @@ public static class ModelBuilderExtension
         return modelBuilder;
     }
 
-    public static ModelBuilder CommentToUserMention(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Comment>()
-            .HasMany(c => c.CommentUserMentions)
-            .WithOne(c => c.Comment)
-            .HasForeignKey(n => n.CommentId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<CommentUserMention>()
-            .HasOne(c => c.Comment)
-            .WithMany(c => c.CommentUserMentions)
-            .OnDelete(DeleteBehavior.NoAction);
-
-        return modelBuilder;
-    }
-
     public static ModelBuilder ProjectToCalendar(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Project>()

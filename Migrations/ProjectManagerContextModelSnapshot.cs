@@ -288,27 +288,6 @@ namespace StasDiplom.Migrations
                     b.ToTable("Comments");
                 });
 
-            modelBuilder.Entity("StasDiplom.Domain.CommentUserMention", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NotificationId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.ToTable("CommentUserMentions");
-                });
-
             modelBuilder.Entity("StasDiplom.Domain.Event", b =>
                 {
                     b.Property<int>("Id")
@@ -377,7 +356,7 @@ namespace StasDiplom.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreationDate")
+                    b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsRead")
@@ -412,7 +391,7 @@ namespace StasDiplom.Migrations
                     b.Property<int>("Id")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CalendarId")
+                    b.Property<int>("CalendarId")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
@@ -461,7 +440,7 @@ namespace StasDiplom.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("DurationTime")
+                    b.Property<double?>("DurationHours")
                         .HasColumnType("float");
 
                     b.Property<int?>("ParentTaskId")
@@ -476,7 +455,7 @@ namespace StasDiplom.Migrations
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
+                    b.Property<int>("TaskStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -498,7 +477,7 @@ namespace StasDiplom.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("TaskStatus")
+                    b.Property<int>("TaskRole")
                         .HasColumnType("int");
 
                     b.HasKey("TaskId", "UserId");
@@ -608,17 +587,6 @@ namespace StasDiplom.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("StasDiplom.Domain.CommentUserMention", b =>
-                {
-                    b.HasOne("StasDiplom.Domain.Comment", "Comment")
-                        .WithMany("CommentUserMentions")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-                });
-
             modelBuilder.Entity("StasDiplom.Domain.Event", b =>
                 {
                     b.HasOne("StasDiplom.Domain.Calendar", "Calendar")
@@ -698,7 +666,7 @@ namespace StasDiplom.Migrations
                     b.HasOne("StasDiplom.Domain.Project", "Project")
                         .WithMany("ProjectUsers")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("StasDiplom.Domain.User", "User")
@@ -728,7 +696,7 @@ namespace StasDiplom.Migrations
                     b.HasOne("StasDiplom.Domain.Task", "Task")
                         .WithMany("TaskUsers")
                         .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("StasDiplom.Domain.User", "User")
@@ -747,11 +715,6 @@ namespace StasDiplom.Migrations
                     b.Navigation("Events");
 
                     b.Navigation("Project");
-                });
-
-            modelBuilder.Entity("StasDiplom.Domain.Comment", b =>
-                {
-                    b.Navigation("CommentUserMentions");
                 });
 
             modelBuilder.Entity("StasDiplom.Domain.Event", b =>

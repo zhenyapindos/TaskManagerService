@@ -37,7 +37,7 @@ public class UserController : Controller
         userExists = await _userManager.FindByEmailAsync(model.Email);
 
         if (userExists != null) return Conflict("Email");
-
+        
         User user = new()
         {
             Email = model.Email,
