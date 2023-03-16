@@ -1,8 +1,8 @@
 ﻿using StasDiplom.Domain;
-using StasDiplom.Dto;
+using StasDiplom.Dto.Notification;
 using Task = StasDiplom.Domain.Task;
 
-namespace StasDiplom.Services;
+namespace StasDiplom.Services.Interfaces;
 
 public interface INotificationService
 {
@@ -12,7 +12,8 @@ public interface INotificationService
     public Task<Notification> UserMention(User user, Comment comment);
     public bool IsUnreadNotifications(User user);
     public Task<List<NotificationInfo>> GetUnreadNotifications(User user);
-    public void MarkAsRead(User user, int id);
+    public void MarkAsRead(User user, List<int> ids);
     public Task<List<NotificationInfo>> GetAllNotificationsInfo(User user);
+    public Task<Notification> EventCreated(User user, Event eventId);
     //public void AddToDictionary(Dictionary<User, List<Notification>> dictionary, Notification notification);
 }

@@ -1,4 +1,6 @@
 ﻿using StasDiplom.Domain;
+using StasDiplom.Dto.Task;
+using StasDiplom.Dto.Users;
 using StasDiplom.Enum;
 using Task = StasDiplom.Domain.Task;
 

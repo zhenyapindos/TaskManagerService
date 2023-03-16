@@ -1,6 +1,6 @@
 ﻿using StasDiplom.Enum;
 
-namespace StasDiplom.Dto.Project;
+namespace StasDiplom.Dto.Users;
 
 public record UserShortInfo
 {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StasDiplom.Domain;
+using StasDiplom.Dto.Event;
 using Task = StasDiplom.Domain.Task;
 
 namespace StasDiplom.Extensions;
@@ -202,31 +203,42 @@ public static class ModelBuilderExtension
         modelBuilder.Entity<Project>()
             .HasOne(c => c.Calendar)
             .WithOne(c => c.Project)
-            .HasForeignKey<Calendar>(c => c.Id)
+            .HasForeignKey<Calendar>(c => c.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Calendar>()
             .HasOne(c => c.Project)
             .WithOne(c => c.Calendar)
-            .HasForeignKey<Project>(c => c.Id)
+            .HasForeignKey<Project>(c => c.CalendarId)
             .OnDelete(DeleteBehavior.NoAction);
 
         return modelBuilder;
     }
     
-    public static ModelBuilder TaskToEvent(this ModelBuilder modelBuilder)
+    public static ModelBuilder CommentToNotification(this ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Task>()
-            .HasMany(c => c.Events)
-            .WithOne(c => c.Task)
-            .HasForeignKey(n => n.TaskId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<Event>()
-            .HasOne(c => c.Task)
-            .WithMany(c => c.Events)
+        modelBuilder.Entity<Notification>()
+            .HasOne(c => c.Comment)
+            .WithMany()
+            .HasForeignKey(c => c.CommentId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        return modelBuilder;
+    }
+
+    public static ModelBuilder EventToEventUsers(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Event>()
+            .HasMany(e => e.EventUsers)
+            .WithOne(e => e.Event)
+            .HasForeignKey(e => e.EventId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<EventUser>()
+            .HasOne(e => e.Event)
+            .WithMany(e => e.EventUsers)
+            .OnDelete(DeleteBehavior.Cascade);
+            
         return modelBuilder;
     }
 }

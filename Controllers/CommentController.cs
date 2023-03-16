@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -10,18 +11,23 @@ using StasDiplom.Dto.Comment;
 using StasDiplom.Dto.Project;
 using StasDiplom.Enum;
 using StasDiplom.Services;
+using StasDiplom.Services.Interfaces;
 using StasDiplom.Utility;
 using Task = StasDiplom.Domain.Task;
 
 namespace StasDiplom.Controllers;
 
+//[ApiController]
+//[Route("api/comments/")]
 public class CommentController : Controller
 {
     private readonly ProjectManagerContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
-    public CommentController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, INotificationService notificationService)
+
+    public CommentController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper,
+        INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
@@ -41,7 +47,7 @@ public class CommentController : Controller
         var project = _context.Projects
             .Include(x => x.Tasks)
             .Include(x => x.ProjectUsers)
-            .ThenInclude(x=> x.User)
+            .ThenInclude(x => x.User)
             .Include(x => x.Comments)
             .FirstOrDefault(x => x.Id == request.ProjectId);
 
@@ -63,12 +69,12 @@ public class CommentController : Controller
         var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
 
         if (resultUser == null) return Forbid();
-        
+
         var usernames = project.ProjectUsers.Select(x => x.User.UserName).ToList();
-        
+
         var mentionedUsernames = GetBetween(request.Text, "@")
             .Where(username => usernames.Contains(username)).ToList();
-        
+
         var comment = _mapper.Map<Comment>(request) with
         {
             CreationDate = DateTime.Now,
@@ -78,23 +84,23 @@ public class CommentController : Controller
         };
 
         project.Comments.Add(comment);
-        
+
         await _context.SaveChangesAsync();
-        
+
         var mentionUsers = project.ProjectUsers.Where(x => mentionedUsernames.Contains(x.User.UserName));
 
         foreach (var projectUser in mentionUsers)
         {
             await _notificationService.UserMention(projectUser.User, comment);
         }
-        
+
         //await _context.SaveChangesAsync();
 
         return Ok();
     }
 
     [Authorize]
-    [HttpGet("/for-project/{projectId:int}")]
+    [HttpGet("for-project/{projectId:int}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
@@ -142,12 +148,12 @@ public class CommentController : Controller
         response.Comments = commentResponses;
         response.Count = commentResponses.Count;
         response.ProjectId = projectId;
-        
+
         return Ok(response);
     }
-    
+
     [Authorize]
-    [HttpGet("/for-task/{taskId:int}")]
+    [HttpGet("for-task/{taskId:int}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
@@ -193,9 +199,10 @@ public class CommentController : Controller
         response.Comments = commentResponses;
         response.Count = commentResponses.Count;
         response.TaskId = taskId;
-        
+
         return Ok(response);
     }
+    
     public IEnumerable<string> GetBetween(string strSource, string strStart)
     {
         var start = strSource.IndexOf(strStart);

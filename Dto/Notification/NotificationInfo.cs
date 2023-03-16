@@ -3,7 +3,7 @@ using StasDiplom.Dto.Project;
 using StasDiplom.Dto.Task;
 using StasDiplom.Enum;
 
-namespace StasDiplom.Dto;
+namespace StasDiplom.Dto.Notification;
 
 public class NotificationInfo
 {

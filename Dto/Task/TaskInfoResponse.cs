@@ -1,4 +1,5 @@
 ﻿using StasDiplom.Dto.Project;
+using StasDiplom.Dto.Users;
 using TaskStatus = StasDiplom.Enum.TaskStatus;
 
 namespace StasDiplom.Dto.Task;

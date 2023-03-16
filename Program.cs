@@ -9,12 +9,17 @@ using StasDiplom;
 using StasDiplom.Context;
 using StasDiplom.Domain;
 using StasDiplom.Dto;
+using StasDiplom.Dto.Calendar;
 using StasDiplom.Dto.Comment;
+using StasDiplom.Dto.Event;
+using StasDiplom.Dto.Notification;
 using StasDiplom.Dto.Project;
 using StasDiplom.Dto.Project.Requests;
 using StasDiplom.Dto.Project.Responses;
 using StasDiplom.Dto.Task;
+using StasDiplom.Dto.Users;
 using StasDiplom.Services;
+using StasDiplom.Services.Interfaces;
 using Task = StasDiplom.Domain.Task;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -96,7 +101,9 @@ builder.Services.AddAutoMapper(config =>
     config.CreateMap<User, UserShortInfo>(MemberList.Destination);
     
     config.CreateMap<Task, TaskShortInfo>(MemberList.Destination);
-
+    
+    config.CreateMap<Task, ShortTaskInfo>(MemberList.Destination);
+    
     config.CreateMap<Task, TaskInfoResponse>(MemberList.Destination);
 
     config.CreateMap<Project, ShortProjectInfo>(MemberList.Destination);
@@ -104,6 +111,17 @@ builder.Services.AddAutoMapper(config =>
     config.CreateMap<UpdateTaskRequest, Task>(MemberList.Source);
     
     config.CreateMap<Notification, NotificationInfo>(MemberList.Destination);
+
+    config.CreateMap<Calendar, CalendarInfo>(MemberList.Destination);
+
+    config.CreateMap<CreateEventRequest, Event>(MemberList.Source);
+
+    config.CreateMap<Event, EventInfo>(MemberList.Destination)
+        .ForMember(x=> x.AssignedUsernames,
+            opt => opt.MapFrom(
+                src => src.EventUsers.Select(x=> x.User.UserName)));
+
+    config.CreateMap<UpdateEventRequest, Event>(MemberList.Source);
 });
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>
@@ -177,6 +195,11 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<ICalendarService, CalendarService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddSingleton<INotificationDictionaryService, NotificationDictionaryService>();
 
 var app = builder.Build();
 

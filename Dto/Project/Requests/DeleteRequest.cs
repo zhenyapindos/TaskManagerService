@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Project;
+﻿namespace StasDiplom.Dto.Project.Requests;
 
 public class DeleteRequest
 {

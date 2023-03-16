@@ -1,21 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client.Utils.Windows;
-using StasDiplom.Context;
 using StasDiplom.Domain;
-using StasDiplom.Dto.Project;
 using StasDiplom.Dto.Project.Requests;
 using StasDiplom.Dto.Project.Responses;
-using StasDiplom.Enum;
-using StasDiplom.Extensions;
-using StasDiplom.Services;
+using StasDiplom.Dto.Users.Project;
+using StasDiplom.Services.Interfaces;
 using StasDiplom.Utility;
-using Task = System.Threading.Tasks.Task;
 using MyTask = StasDiplom.Domain.Task;
-using TaskStatus = System.Threading.Tasks.TaskStatus;
 
 namespace StasDiplom.Controllers;
 
@@ -23,16 +15,18 @@ namespace StasDiplom.Controllers;
 [Route("api/project/")]
 public class ProjectController : Controller
 {
-    private readonly ProjectManagerContext _context;
-    private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
-    public ProjectController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, INotificationService notificationService)
+    private readonly ICalendarService _calendarService;
+    private readonly IProjectService _projectService;
+
+    public ProjectController(IMapper mapper,
+        INotificationService notificationService, ICalendarService calendarService, IProjectService projectService)
     {
-        _context = context;
-        _userManager = userManager;
         _mapper = mapper;
         _notificationService = notificationService;
+        _calendarService = calendarService;
+        _projectService = projectService;
     }
 
     [Authorize]
@@ -43,27 +37,10 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var calendar = new Calendar
-        {
-            Title = projectRequest.Title + "'s calendar"
-        };
+        var newProject = await _projectService.CreateProject(projectRequest, id);
 
-        var newProject = _mapper.Map<Project>(projectRequest);
-        newProject.Calendar = calendar;
+        await _calendarService.CreateProjectCalendar(newProject);
 
-        await _context.Projects.AddAsync(newProject);
-
-        var projectUser = new ProjectUser
-        {
-            UserId = id,
-            UserProjectRole = UserProjectRole.Admin,
-            Project = newProject
-        };
-        
-        await _context.ProjectUsers.AddAsync(projectUser);
-
-        await _context.SaveChangesAsync();
-        
         return Ok(_mapper.Map<CreateProjectResponse>(newProject));
     }
 
@@ -75,14 +52,7 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var projectUsers = _mapper.Map<IEnumerable<UserProjectResponse>>(_context
-            .ProjectUsers
-            .AsNoTracking()
-            .Where(x => x.UserId == id)
-            .Include(x => x.Project));
-            //.ThenInclude(x => x.) свойства из проекта
-            
-        return Ok(projectUsers);
+        return Ok(_projectService.GetAllProjects(id));
     }
 
     [Authorize]
@@ -96,38 +66,29 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var user = request.EmailOrUsername.Contains('@') 
-            ? await _userManager.FindByEmailAsync(request.EmailOrUsername)
-            : await _userManager.FindByNameAsync(request.EmailOrUsername);
+        Project project;
+        User user;
 
-        if (user == null) return BadRequest();
-
-        var project = _context.Projects
-            .Include(x=> x.Notifications)
-            .FirstOrDefault(x => x.Id == request.ProjectId);
-
-        if (project == null) return NotFound();
-
-        var resultUser = _context.ProjectUsers
-            .AsNoTracking()
-            .FirstOrDefault(x => x.UserId == id && x.ProjectId == project.Id);
-        
-        if (resultUser == null) return Forbid();
-
-        var projectUser = new ProjectUser
+        try
         {
-            UserProjectRole = UserProjectRole.Invited,
-            User = user,
-            Project = project
-        };
+            (project, user) = await _projectService.InviteUser(request, id);
+        }
+        catch (ArgumentException e)
+        {
+            return e switch
+            {
+                {Message: "User is not exist"} => NotFound(),
+                {Message: "Project is not exist"} => BadRequest(),
+                {Message: "User has no permissions"} => Forbid(),
+                _ => Problem()
+            };
+        }
 
-        await _context.ProjectUsers.AddAsync(projectUser);
-        await _context.SaveChangesAsync();
         await _notificationService.ProjectInvitation(project, user);
-        
+
         return Ok();
     }
-    
+
     [Authorize]
     [HttpPost("kick-user")]
     [ProducesResponseType(200)]
@@ -139,31 +100,29 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var user = request.EmailOrUsername.Contains('@') 
-            ? await _userManager.FindByEmailAsync(request.EmailOrUsername)
-            : await _userManager.FindByNameAsync(request.EmailOrUsername);
+        Project project;
+        User user;
 
-        if (user == null) return BadRequest();
+        try
+        {
+            (project, user) = await _projectService.KickUser(request, id);
+        }
+        catch (ArgumentException e)
+        {
+            return e switch
+            {
+                {Message: "User is not exist"} => NotFound(),
+                {Message: "Project is not exist"} => BadRequest(),
+                {Message: "User has no permissions"} => Forbid(),
+                _ => Problem()
+            };
+        }
 
-        var project = _context.Projects.Include(x => x.ProjectUsers).FirstOrDefault(x => x.Id == request.ProjectId);
-
-        if (project == null) return NotFound();
-
-        var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (resultUser == null) return Forbid();
-        
-        resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == user.Id);
-
-        if (resultUser == null) return NotFound();
-        
-        _context.ProjectUsers.Remove(resultUser);
-        await _context.SaveChangesAsync();
         await _notificationService.ProjectKick(project, user);
-        
+
         return Ok();
     }
-    
+
     [Authorize]
     [HttpPost("change-role")]
     [ProducesResponseType(200)]
@@ -175,33 +134,20 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var user = request.EmailOrUsername.Contains('@') 
-            ? await _userManager.FindByEmailAsync(request.EmailOrUsername)
-            : await _userManager.FindByNameAsync(request.EmailOrUsername);
-
-        if (user == null) return BadRequest();
-
-        var project = _context.Projects
-            .Include(x => x.ProjectUsers)
-            .FirstOrDefault(x => x.Id == request.ProjectId);
-
-        if (project == null) return NotFound();
-
-        var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (resultUser == null) return Forbid();
-        
-        resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == user.Id);
-
-        if (resultUser == null) return NotFound();
-
-        resultUser.UserProjectRole = resultUser.UserProjectRole == UserProjectRole.Worker 
-            ? UserProjectRole.Moderator : UserProjectRole.Worker;
-        
-        _context.ProjectUsers.Update(resultUser);
-        await _context.SaveChangesAsync();
-
-        return Ok();
+        try
+        {
+            return Ok(_projectService.ChangeRole(request, id));
+        }
+        catch (ArgumentException e)
+        {
+            return e switch
+            {
+                {Message: "User is not exist"} => NotFound(),
+                {Message: "Project is not exist"} => BadRequest(),
+                {Message: "User has no permissions"} => Forbid(),
+                _ => Problem()
+            };
+        }
     }
 
     [Authorize]
@@ -214,35 +160,20 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var project = _context.Projects
-            .Include(x => x.ProjectUsers)
-            .FirstOrDefault(y => y.Id == request.Id);
-
-        if (project == null) return NotFound();
-
-        var resultUser = project.ProjectUsers
-            .FirstOrDefault(x => x.UserId == id && x.UserProjectRole == UserProjectRole.Admin);
-            
-        if (resultUser == null) return Forbid();    
-
-        if (request.Title != null)
+        try
         {
-            project.Title = request.Title;
+            return Ok(await _projectService.UpdateProject(request, id));
         }
-
-        if (request.Description != null)
+        catch (ArgumentException e)
         {
-            project.Description = request.Description;
+            return e switch
+            {
+                {Message: "User is not exist"} => NotFound(),
+                {Message: "Project is not exist"} => BadRequest(),
+                {Message: "User has no permissions"} => Forbid(),
+                _ => Problem()
+            };
         }
-
-        _context.Projects.Update(project);
-        await _context.SaveChangesAsync();
-
-        return Ok(new UpdateProjectResponse
-        {
-            Title = project.Title,
-            Description = project.Description
-        });
     }
 
 
@@ -252,27 +183,26 @@ public class ProjectController : Controller
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> DeleteProject(DeleteRequest projectId)
+    public async Task<IActionResult> DeleteProject(DeleteRequest request)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var project = _context.Projects
-            .Include(x => x.ProjectUsers)
-            .FirstOrDefault(y => y.Id == projectId.Id);
-
-        if (project == null) return NotFound();
-
-        var resultUser = project.ProjectUsers
-            .FirstOrDefault(x => x.UserId == id && x.UserProjectRole == UserProjectRole.Admin);
-            
-        if (resultUser == null) return Forbid();
-
-        _context.Remove(project);
-        await _context.SaveChangesAsync();
-
-        return Ok();
+        try
+        {
+            return Ok(_projectService.DeleteProject(request, id));
+        }
+        catch (ArgumentException e)
+        {
+            return e switch
+            {
+                {Message: "User is not exist"} => NotFound(),
+                {Message: "Project is not exist"} => BadRequest(),
+                {Message: "User has no permissions"} => Forbid(),
+                _ => Problem()
+            };
+        }
     }
-    
+
     [Authorize]
     [HttpGet("{projectId:int}")]
     [ProducesResponseType(200)]
@@ -283,31 +213,19 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var project = _context.Projects.Include(x => x.ProjectUsers)
-            .Include(x=> x.Tasks)
-            .FirstOrDefault(x => x.Id == projectId);
-
-        if (project == null) return NotFound();
-
-        var response = _mapper.Map<GetProjectResponse>(project);
-        
-        var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (resultUser == null) return Forbid();
-
-        var users = project.ProjectUsers.Join(_userManager.Users,
-            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserShortInfo>((user, projectUser))).ToList();
-
-        response.UserList = users;
-        response.UserProjectRole = resultUser.UserProjectRole;
-        response.TaskList = new List<TaskShortInfo>();
-
-        foreach (var task in project.Tasks)
+        try
         {
-            response.TaskList.Add(_mapper.Map<TaskShortInfo>(task));
+            return Ok(await _projectService.GetProject(projectId, id));
         }
-        
-        return Ok(response);
+        catch (ArgumentException e)
+        {
+            return e switch
+            {   
+                {Message: "Project is not exist"} => BadRequest(),
+                {Message: "User has no permissions"} => Forbid(),
+                _ => Problem()
+            };
+        }
     }
 
     [Authorize]
@@ -320,24 +238,20 @@ public class ProjectController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var project = _context.Projects
-            .Include(x => x.ProjectUsers)
-            .FirstOrDefault(y => y.Id == projectId);
-
-        if (project == null) return NotFound();
-
-        var resultUser = project.ProjectUsers
-            .FirstOrDefault(x => x.UserId == id);
-            
-        if (resultUser == null) return Forbid();
-
-        if (resultUser.UserProjectRole != UserProjectRole.Invited) return BadRequest();
-
-        resultUser.UserProjectRole = UserProjectRole.Worker;
-
-        await _context.SaveChangesAsync();
-
-        return Ok();
+        try
+        {
+            return Ok(_projectService.AcceptInvitation(projectId, id));
+        }
+        catch (ArgumentException e)
+        {
+            return e switch
+            {
+                {Message: "Project is not exist"} => NotFound(),
+                {Message: "User is already on project"} => BadRequest(),
+                {Message: "User is not invited on project"} => Forbid(),
+                _ => Problem()
+            };
+        }
     }
 
     [Authorize]
@@ -349,20 +263,20 @@ public class ProjectController : Controller
     public async Task<IActionResult> GetProjectUsers([FromRoute] int projectId)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
-        
-        var project = _context.Projects
-            .Include(x => x.ProjectUsers)
-            .FirstOrDefault(x => x.Id == projectId);
 
-        if (project == null) return NotFound();
-
-        var resultUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (resultUser == null) return Forbid();
-        
-        var users = project.ProjectUsers.Join(_userManager.Users,
-            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserShortInfo>((user, projectUser))).ToList();
-
-        return Ok(users);
+        try
+        {
+            return Ok(_projectService.GetProjectUsers(projectId, id));
+        }
+        catch (ArgumentException e)
+        {
+            return e switch
+            {
+                {Message: "User is not exist"} => NotFound(),
+                {Message: "Project is not exist"} => BadRequest(),
+                {Message: "User has no permissions"} => Forbid(),
+                _ => Problem()
+            };
+        }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using StasDiplom.Domain;
 using StasDiplom.Services;
+using StasDiplom.Services.Interfaces;
 using StasDiplom.Utility;
 
 namespace StasDiplom.Controllers;
@@ -35,13 +36,13 @@ public class NotificationController : Controller
     [Authorize]
     [HttpPost("read")]
     [ProducesResponseType(401)]
-    public async Task<IActionResult> MarkAsRead([FromQuery] int id)
+    public async Task<IActionResult> MarkAsRead([FromBody] List<int> ids)
     {
         var userId = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
         var user = _userManager.FindByIdAsync(userId).Result;
 
-        _notificationService.MarkAsRead(user, id);
+        _notificationService.MarkAsRead(user, ids);
         
         return Ok();
     }

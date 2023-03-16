@@ -39,7 +39,9 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
             .UserToTask()
             .UserToProject()
             .ProjectToCalendar()
-            .TaskToEvent();
+            //.TaskToEvent()
+            .CommentToNotification()
+            .EventToEventUsers();
     }
 
     
