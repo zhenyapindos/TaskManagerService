@@ -199,6 +199,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddSingleton<INotificationDictionaryService, NotificationDictionaryService>();
 
 var app = builder.Build();

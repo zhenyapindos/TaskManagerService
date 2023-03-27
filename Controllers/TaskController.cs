@@ -14,8 +14,9 @@ using StasDiplom.Enum;
 using StasDiplom.Services;
 using StasDiplom.Services.Interfaces;
 using StasDiplom.Utility;
-using Task = StasDiplom.Domain.Task;
+using Task = System.Threading.Tasks.Task;
 using TaskStatus = StasDiplom.Enum.TaskStatus;
+using DomainTask = StasDiplom.Domain.Task;
 
 namespace StasDiplom.Controllers;
 
@@ -27,13 +28,16 @@ public class TaskController : Controller
     private readonly UserManager<User> _userManager; 
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
+    private readonly ITaskService _taskService;
     
-    public TaskController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, INotificationService service)
+    public TaskController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, 
+        INotificationService service, ITaskService taskService)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
         _notificationService = service;
+        _taskService = taskService;
     }
 
     [Authorize]
@@ -41,54 +45,30 @@ public class TaskController : Controller
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> CreateTask(CreateTaskRequest request)
+    public async Task<IActionResult> CreateTask([FromBody] CreateTaskRequest request)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
-        
-        var user = await _userManager.FindByIdAsync(id);
-        
-        var newTask = _mapper.Map<Task>(request) with
-        {
-            CreationTime = DateTime.Now,
-            Project = _context.Projects.First(x=> x.Id == request.ProjectId),
-            TaskStatus = TaskStatus.Created
-        };
 
-        await _context.Tasks.AddAsync(newTask);
-
-        var taskUsers = new List<TaskUser>
+        try
         {
-            new()
-            {
-                User = user,
-                Task = newTask,
-                TaskRole = TaskRole.Creator
-            }
-        };
-        
-        foreach (var username in request.AssignedUsersUsernames)
-        {
-            user = await _userManager.FindByNameAsync(username);
-            
-            if (user == null) continue;
-
-            var taskUser = new TaskUser
-            {
-                Task = newTask,
-                TaskRole = TaskRole.Assigned,
-                User = user
-            };
-            
-            taskUsers.Add(taskUser);
+            return Ok(await _taskService.CreateTask(request, id));
         }
-
-        await _context.TaskUsers.AddRangeAsync(taskUsers);
-        
-        await _context.SaveChangesAsync();
-
-        return Ok();
+        catch (ArgumentException e)
+        {
+            return e switch
+            {
+                {Message: "Project is not found"} => NotFound(),
+                {Message: "User is not in project"} => Forbid(),
+                _ => Problem() 
+            };
+        }
+        catch (InvalidOperationException)
+        {
+            return Forbid();
+        }
     }
 
+    
     [Authorize]
     [HttpGet("/api/task/{taskId:int}")]
     [ProducesResponseType(401)]
@@ -97,30 +77,19 @@ public class TaskController : Controller
     public async Task<IActionResult> GetTaskInfo([FromRoute] int taskId)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
-        
-        var task = _context.Tasks
-            .Include(x => x.Project)
-            .Include(x => x.TaskUsers)
-            .FirstOrDefault(x => x.Id == taskId);
 
-        if (task == null) return NotFound();
-
-        var user = task.TaskUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (user == null) return Forbid();
-
-        var project = _context.Projects.FirstOrDefault(x => x.Id == task.ProjectId);
-        var shortProjectInfo = _mapper.Map<ShortProjectInfo>(project);
-
-        var response = _mapper.Map<TaskInfoResponse>(task);
-        response.Project = shortProjectInfo;
-
-        var users = task.TaskUsers.Join(_userManager.Users,
-            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserShortInfo>((user, projectUser))).ToList();
-
-        response.AssignedUsers = users;
-        
-        return Ok(response);
+        try
+        {
+            return Ok(_taskService.GetTaskInfo(taskId, id));
+        }
+        catch (ArgumentException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException)
+        {
+            return Forbid();
+        }
     }
 
     [Authorize]
@@ -132,35 +101,18 @@ public class TaskController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var task = _context.Tasks
-            .AsNoTracking()
-            .Include(x => x.TaskUsers)
-            .Include(x=> x.Project)
-            .ThenInclude(x=> x.ProjectUsers)
-            .FirstOrDefault(x => x.Id == taskId);
-        
-        if (task == null) return NotFound();
-
-        var projectId = task.ProjectId;
-        
-        var user = task.Project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (user == null) return Forbid();
-
-        var newTask = _mapper.Map<Task>(request) with
+        try
         {
-            Id = taskId,
-            ProjectId = projectId
-        };
-
-        _context.Tasks.Update(newTask);
-        await _context.SaveChangesAsync();
-        
-        var response = _mapper.Map<TaskInfoResponse>(newTask);
-        response.AssignedUsers = task.TaskUsers.Join(_userManager.Users,
-            pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserShortInfo>((user, projectUser))).ToList();
-        
-        return Ok(response);
+            return Ok(await _taskService.UpdateTask(taskId, request, id));
+        }
+        catch (ArgumentException)
+        {
+            return BadRequest();
+        }
+        catch (InvalidOperationException)
+        {
+            return Forbid();
+        }
     }
 
     [Authorize]
@@ -172,20 +124,18 @@ public class TaskController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var task = _context.Tasks
-            .Include(x => x.TaskUsers)
-            .Include(x => x.Project)
-            .Include(x => x.TaskUsers)
-            .FirstOrDefault(x => x.Id == taskId);
-
-        if (task == null) return NotFound();
-
-        var user = task.TaskUsers.FirstOrDefault(x => x.UserId == id && x.TaskRole == TaskRole.Creator);
-
-        if (user == null) return Forbid();
-
-        _context.Tasks.Remove(task);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _taskService.DeleteTask(taskId, id);
+        }
+        catch (ArgumentException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException)
+        {
+            return Forbid();
+        }
         
         return Ok();
     }
@@ -198,35 +148,29 @@ public class TaskController : Controller
     public async Task<IActionResult> AssignUser([FromBody] UserTaskInterractionRequest request)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
-
-        var task = _context.Tasks
-            .Include(x => x.TaskUsers)
-            .Include(x => x.Project)
-            .ThenInclude(x=> x.ProjectUsers)
-            .Include(x => x.TaskUsers)
-            .FirstOrDefault(x => x.Id == request.TaskId);
-
-        if (task == null) return NotFound();
         
-        var user = task.TaskUsers.FirstOrDefault(x => x.UserId == id);
+        DomainTask task;
+        User user;
 
-        if (user == null || user.TaskRole != TaskRole.Creator) return Forbid();
-
-        var userExists = await _userManager.FindByNameAsync(request.Username);
-
-        if (userExists == null) return NotFound();
-
-        var newTaskUser = new TaskUser
+        try
         {
-            User = userExists,
-            Task = task,
-            TaskRole = TaskRole.Assigned
-        };
+            (task, user) = await _taskService.AssignUser(request, id);
+        }
+        catch (InvalidOperationException e)
+        {
+            return e switch
+            {
+                {Message: "User has no permissions"} => Forbid(),
+                {Message: "User is not found"} => NotFound(),
+                _ => Problem()
+            };
+        }
+        catch (ArgumentException)
+        {
+            return NotFound();
+        }
         
-        task.TaskUsers.Add(newTaskUser);
-        
-        await _context.SaveChangesAsync();
-        await _notificationService.TaskAssignUser(task, userExists);
+        await _notificationService.TaskAssignUser(task, user);
         
         return Ok();
     }
@@ -240,32 +184,23 @@ public class TaskController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var task = _context.Tasks
-            .Include(x => x.TaskUsers)
-            .Include(x => x.Project)
-            .ThenInclude(x=> x.ProjectUsers)
-            .Include(x => x.TaskUsers)
-            .FirstOrDefault(x => x.Id == request.TaskId);
-
-        if (task == null) return NotFound();
-        
-        var user = task.TaskUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (user == null || user.TaskRole != TaskRole.Creator) return Forbid();
-
-        var userExists = await _userManager.FindByNameAsync(request.Username);
-
-        if (userExists == null) return NotFound();
-
-        var newTaskUser = task.TaskUsers.FirstOrDefault(x => x.UserId == userExists.Id);
-
-        if (newTaskUser != null)
+        try
         {
-            _context.TaskUsers.Remove(newTaskUser);
+            await _taskService.AssignUser(request, id);
         }
-        
-        await _context.SaveChangesAsync();
-        //notificationService
+        catch (InvalidOperationException e)
+        {
+            return e switch
+            {
+                {Message: "User has no permissions"} => Forbid(),
+                {Message: "User is not found"} => NotFound(),
+                _ => Problem()
+            };
+        }
+        catch (ArgumentException)
+        {
+            return NotFound();
+        }
         
         return Ok();
     }
@@ -279,20 +214,18 @@ public class TaskController : Controller
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
 
-        var task = _context.Tasks
-            .Include(x => x.TaskUsers)
-            .FirstOrDefault(x => x.Id == taskId);
-
-        if (task == null) return NotFound();
-        
-        var user = task.TaskUsers.FirstOrDefault(x => x.UserId == id);
-
-        if (user == null || user.TaskRole != TaskRole.Creator) return Forbid();
-
-        task.TaskStatus = TaskStatus.Done;
-
-        _context.Tasks.Update(task);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _taskService.MarkTaskAsDone(taskId, id);
+        }
+        catch (ArgumentException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException)
+        {
+            return Forbid();
+        }
         
         return Ok();
     }
