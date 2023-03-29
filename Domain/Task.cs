@@ -15,6 +15,7 @@ public record Task
     public int? PreviousTaskId { get; set; }
     public DateTime? StartDate { get; set; }
     public int ProjectId { get; set; }
+    public DateTime? Deadline { get; set; }
     public Project Project { get; set; }
 
     public ICollection<TaskUser> TaskUsers { get; set; }

@@ -45,6 +45,17 @@ public class ProjectController : Controller
     }
 
     [Authorize]
+    [HttpGet("user-tasks")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> GetAllTasks()
+    {
+        var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+        
+        return Ok(await _projectService.GetUsersTasks(id));
+    }
+
+    [Authorize]
     [HttpGet("")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
@@ -136,7 +147,7 @@ public class ProjectController : Controller
 
         try
         {
-            return Ok(_projectService.ChangeRole(request, id));
+            await _projectService.ChangeRole(request, id);
         }
         catch (ArgumentException e)
         {
@@ -148,6 +159,8 @@ public class ProjectController : Controller
                 _ => Problem()
             };
         }
+
+        return Ok();
     }
 
     [Authorize]
@@ -220,7 +233,7 @@ public class ProjectController : Controller
         catch (ArgumentException e)
         {
             return e switch
-            {   
+            {
                 {Message: "Project is not exist"} => BadRequest(),
                 {Message: "User has no permissions"} => Forbid(),
                 _ => Problem()
@@ -240,7 +253,7 @@ public class ProjectController : Controller
 
         try
         {
-            return Ok(_projectService.AcceptInvitation(projectId, id));
+            await _projectService.AcceptInvitation(projectId, id);
         }
         catch (ArgumentException e)
         {
@@ -252,6 +265,8 @@ public class ProjectController : Controller
                 _ => Problem()
             };
         }
+
+        return Ok();
     }
 
     [Authorize]

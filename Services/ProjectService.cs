@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StasDiplom.Context;
 using StasDiplom.Domain;
+using StasDiplom.Dto.Project;
 using StasDiplom.Dto.Project.Requests;
 using StasDiplom.Dto.Project.Responses;
 using StasDiplom.Dto.Task;
@@ -19,17 +20,12 @@ public class ProjectService : IProjectService
     private readonly ProjectManagerContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
-    private readonly INotificationService _notificationService;
-    private readonly ICalendarService _calendarService;
 
-    public ProjectService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper,
-        INotificationService notificationService, ICalendarService calendarService)
+    public ProjectService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
-        _notificationService = notificationService;
-        _calendarService = calendarService;
     }
 
     public async Task<Project> CreateProject(CreateProjectRequest createProjectRequest, string id)
@@ -63,6 +59,52 @@ public class ProjectService : IProjectService
             .Include(x => x.Project));
 
         return projectUsers;
+    }
+
+    public async Task<ICollection<ProjectsUsersTasks>> GetUsersTasks(string id)
+    {
+        var projects = _context.Projects
+            .Include(x=> x.ProjectUsers)
+            .ThenInclude(x=> x.User)
+            .Include(x => x.Tasks)
+            .ThenInclude(x => x.TaskUsers)
+            .ToList();
+
+        var response = new List<ProjectsUsersTasks>();
+        
+        foreach (var project in projects)
+        {
+            var currentProjectUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
+            if (!project.ProjectUsers.Contains(currentProjectUser!))
+            {
+                continue;
+            }
+            var responseElement = new ProjectsUsersTasks
+            {
+                ProjectId = project.Id,
+                Title = project.Title,
+                TaskList = new List<TaskShortInfo>()
+            };
+
+            foreach (var task in project.Tasks)
+            {
+                var currentTaskUser = task.TaskUsers.FirstOrDefault(x => x.UserId == id);
+
+                if (!task.TaskUsers.Contains(currentTaskUser!))
+                {
+                    continue;
+                }
+                
+                if (task.TaskUsers.Contains(currentTaskUser!))
+                {
+                    responseElement.TaskList.Add(_mapper.Map<TaskShortInfo>(task));
+                }
+            }
+
+            response.Add(responseElement);
+        }
+
+        return response;
     }
 
     public async Task<(Project, User)> InviteUser(UserProjectInteractionRequest request, string userId)

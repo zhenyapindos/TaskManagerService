@@ -21,15 +21,12 @@ public class TaskService : ITaskService
     private readonly ProjectManagerContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
-    private readonly INotificationService _notificationService;
 
-    public TaskService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper,
-        INotificationService service)
+    public TaskService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
-        _notificationService = service;
     }
 
     public async Task<TaskShortInfo> CreateTask(CreateTaskRequest request, string userId)
@@ -61,7 +58,8 @@ public class TaskService : ITaskService
         {
             CreationTime = DateTime.Now,
             Project = project,
-            TaskStatus = TaskStatus.Created
+            TaskStatus = TaskStatus.Created,
+            Deadline = request.StartDate!.Value.AddHours(request.DurationHours)
         };
 
         if (request.ParentTaskId != null)
@@ -117,6 +115,7 @@ public class TaskService : ITaskService
     {
         var task = _context.Tasks
             .Include(x => x.Project)
+            .ThenInclude(x=> x.ProjectUsers)
             .Include(x => x.TaskUsers)
             .FirstOrDefault(x => x.Id == taskId);
 
@@ -125,7 +124,7 @@ public class TaskService : ITaskService
             throw new ArgumentException("Task is not found");
         }
 
-        var taskUser = task.TaskUsers.FirstOrDefault(x => x.UserId == userId);
+        var taskUser = task.Project.ProjectUsers.FirstOrDefault(x => x.UserId == userId);
 
         if (taskUser == null)
         {
@@ -137,6 +136,21 @@ public class TaskService : ITaskService
 
         var response = _mapper.Map<TaskInfoResponse>(task);
         response.Project = shortProjectInfo;
+        
+        //response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+        
+        if (task.StartDate > DateTime.Now)
+        {
+            response.Status = TaskStatus.Planned;
+        }
+        else if (DateTime.Now < response.Deadline && DateTime.Now >= task.StartDate)
+        {
+            response.Status = TaskStatus.InProgress;
+        }
+        else if (response.Deadline < DateTime.Now)
+        {
+            response.Status = TaskStatus.Overdue;
+        }
 
         if (task.PreviousTaskId != null)
         {
