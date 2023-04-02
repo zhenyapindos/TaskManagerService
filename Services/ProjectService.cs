@@ -75,10 +75,12 @@ public class ProjectService : IProjectService
         foreach (var project in projects)
         {
             var currentProjectUser = project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
+            
             if (!project.ProjectUsers.Contains(currentProjectUser!))
             {
                 continue;
             }
+            
             var responseElement = new ProjectsUsersTasks
             {
                 ProjectId = project.Id,
@@ -90,17 +92,18 @@ public class ProjectService : IProjectService
             {
                 var currentTaskUser = task.TaskUsers.FirstOrDefault(x => x.UserId == id);
 
-                if (!task.TaskUsers.Contains(currentTaskUser!))
-                {
-                    continue;
-                }
+                if (!task.TaskUsers.Contains(currentTaskUser!)) continue;
                 
-                if (task.TaskUsers.Contains(currentTaskUser!))
+                var mappedTask = _mapper.Map<TaskShortInfo>(task);
+                    
+                if (task.Deadline != null)
                 {
-                    responseElement.TaskList.Add(_mapper.Map<TaskShortInfo>(task));
+                    mappedTask.Deadline = (DateTime) task.Deadline!;
                 }
+                    
+                responseElement.TaskList.Add(mappedTask);
             }
-
+            
             response.Add(responseElement);
         }
 

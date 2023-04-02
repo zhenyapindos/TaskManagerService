@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Net;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -56,10 +57,9 @@ public class TaskService : ITaskService
 
         var newTask = _mapper.Map<DomainTask>(request) with
         {
-            CreationTime = DateTime.Now,
+            CreationTime = DateTime.UtcNow,
             Project = project,
-            TaskStatus = TaskStatus.Created,
-            Deadline = request.StartDate!.Value.AddHours(request.DurationHours)
+            TaskStatus = TaskStatus.Created
         };
 
         if (request.ParentTaskId != null)
@@ -70,6 +70,25 @@ public class TaskService : ITaskService
         if (request.PreviousTaskId != null)
         {
             newTask.PreviousTaskId = request.PreviousTaskId;
+        }
+
+        if (request.StartDate != null)
+        {
+            newTask.Deadline = request.StartDate.Value.AddHours(request.DurationHours);
+            newTask.TaskStatus = TaskStatus.Created;
+        }
+
+        if (newTask.StartDate > DateTime.UtcNow)
+        {
+            newTask.TaskStatus = TaskStatus.Planned;
+        }
+        else if (DateTime.UtcNow < newTask.Deadline && DateTime.UtcNow >= newTask.StartDate)
+        {
+            newTask.TaskStatus = TaskStatus.InProgress;
+        }
+        else if (newTask.Deadline < DateTime.UtcNow)
+        {
+            newTask.TaskStatus = TaskStatus.Overdue;
         }
 
         await _context.Tasks.AddAsync(newTask);
@@ -115,7 +134,7 @@ public class TaskService : ITaskService
     {
         var task = _context.Tasks
             .Include(x => x.Project)
-            .ThenInclude(x=> x.ProjectUsers)
+            .ThenInclude(x => x.ProjectUsers)
             .Include(x => x.TaskUsers)
             .FirstOrDefault(x => x.Id == taskId);
 
@@ -137,19 +156,30 @@ public class TaskService : ITaskService
         var response = _mapper.Map<TaskInfoResponse>(task);
         response.Project = shortProjectInfo;
         
-        //response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
-        
-        if (task.StartDate > DateTime.Now)
+        if (task.StartDate != null)
         {
-            response.Status = TaskStatus.Planned;
+            response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
         }
-        else if (DateTime.Now < response.Deadline && DateTime.Now >= task.StartDate)
+
+        if (task.TaskStatus != TaskStatus.Done)
         {
-            response.Status = TaskStatus.InProgress;
+            if (task.StartDate > DateTime.UtcNow)
+            {
+                response.Status = TaskStatus.Planned;
+            }
+            else if (DateTime.UtcNow < response.Deadline && DateTime.UtcNow >= task.StartDate)
+            {
+                response.Status = TaskStatus.InProgress;
+            }
+            else if (response.Deadline < DateTime.UtcNow)
+            {
+                response.Status = TaskStatus.Overdue;
+            }
         }
-        else if (response.Deadline < DateTime.Now)
+        else
         {
-            response.Status = TaskStatus.Overdue;
+            response.Status = TaskStatus.Done;
+            response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
         }
 
         if (task.PreviousTaskId != null)
@@ -207,6 +237,31 @@ public class TaskService : ITaskService
             Id = taskId,
             ProjectId = projectId
         };
+
+        if (newTask.DurationHours != null && newTask.StartDate != null)
+        {
+            newTask.Deadline = newTask.StartDate.Value.AddHours((double) newTask.DurationHours);
+        }
+
+        if (newTask.TaskStatus != TaskStatus.Done)
+        {
+            if (newTask.StartDate > DateTime.UtcNow)
+            {
+                newTask.TaskStatus = TaskStatus.Planned;
+            }
+            else if (DateTime.UtcNow < newTask.Deadline && DateTime.UtcNow >= task.StartDate)
+            {
+                newTask.TaskStatus = TaskStatus.InProgress;
+            }
+            else if (newTask.Deadline < DateTime.UtcNow)
+            {
+                newTask.TaskStatus = TaskStatus.Overdue;
+            }
+        }
+        else
+        {
+            newTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+        }
 
         _context.Tasks.Update(newTask);
         await _context.SaveChangesAsync();
