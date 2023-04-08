@@ -70,6 +70,8 @@ public class TaskService : ITaskService
         if (request.PreviousTaskId != null)
         {
             newTask.PreviousTaskId = request.PreviousTaskId;
+
+            newTask.ParentTaskId = _context.Tasks.FirstOrDefault(x => x.Id == request.PreviousTaskId).ParentTaskId;
         }
 
         if (request.StartDate != null)
@@ -155,7 +157,7 @@ public class TaskService : ITaskService
 
         var response = _mapper.Map<TaskInfoResponse>(task);
         response.Project = shortProjectInfo;
-        
+
         if (task.StartDate != null)
         {
             response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
@@ -191,7 +193,7 @@ public class TaskService : ITaskService
         if (task.ParentTaskId != null)
         {
             response.ParentTask =
-                _mapper.Map<TaskShortInfo>(_context.Tasks.FirstOrDefault(x => x.ParentTaskId == task.ParentTaskId));
+                _mapper.Map<TaskShortInfo>(_context.Tasks.FirstOrDefault(x => x.Id == task.ParentTaskId));
         }
 
         var users = task.TaskUsers.Join(_userManager.Users,
@@ -302,10 +304,40 @@ public class TaskService : ITaskService
             throw new InvalidOperationException("User has no permissions");
         }
 
-        //ToDo: deleting parent\prev tasks
+        var previousTasks = _context.Tasks.Where(x => x.PreviousTaskId! == taskId);
+        DeletePreviousTasks(previousTasks);
 
-        _context.Tasks.Remove(task);
+        var childTasks = _context.Tasks.Where(x => x.ParentTaskId! == taskId);
+            DeleteChildTasks(childTasks);
+        
+        _context.Remove(task);
+        
         await _context.SaveChangesAsync();
+    }
+
+    private async void DeletePreviousTasks(IEnumerable<DomainTask> previousTasks)
+    {
+        foreach (var task in previousTasks)
+        {
+            var childTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
+            DeleteChildTasks(childTasks);
+            
+            task.PreviousTaskId = null;
+        }
+    }
+    
+    private async void DeleteChildTasks(IEnumerable<DomainTask> childTasks)
+    {
+        foreach (var task in childTasks)
+        {
+            var previousTasks = _context.Tasks.Where(x => x.PreviousTaskId! == task.Id);
+            DeletePreviousTasks(previousTasks);
+            
+            var currentChildTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
+            DeleteChildTasks(currentChildTasks);
+            
+            _context.Remove(task);
+        }
     }
 
     public async Task<(DomainTask task, User user)> AssignUser(UserTaskInterractionRequest request, string userId)

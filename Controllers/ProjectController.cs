@@ -270,7 +270,7 @@ public class ProjectController : Controller
     }
 
     [Authorize]
-    [HttpPost("/{projectId:int}/users")]
+    [HttpGet("/{projectId:int}/users")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(403)]
