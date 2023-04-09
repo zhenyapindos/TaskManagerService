@@ -308,10 +308,10 @@ public class TaskService : ITaskService
         DeletePreviousTasks(previousTasks);
 
         var childTasks = _context.Tasks.Where(x => x.ParentTaskId! == taskId);
-            DeleteChildTasks(childTasks);
-        
+        DeleteChildTasks(childTasks);
+
         _context.Remove(task);
-        
+
         await _context.SaveChangesAsync();
     }
 
@@ -321,21 +321,21 @@ public class TaskService : ITaskService
         {
             var childTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
             DeleteChildTasks(childTasks);
-            
+
             task.PreviousTaskId = null;
         }
     }
-    
+
     private async void DeleteChildTasks(IEnumerable<DomainTask> childTasks)
     {
         foreach (var task in childTasks)
         {
             var previousTasks = _context.Tasks.Where(x => x.PreviousTaskId! == task.Id);
             DeletePreviousTasks(previousTasks);
-            
+
             var currentChildTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
             DeleteChildTasks(currentChildTasks);
-            
+
             _context.Remove(task);
         }
     }

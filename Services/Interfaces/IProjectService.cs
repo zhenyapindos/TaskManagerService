@@ -21,5 +21,4 @@ public interface IProjectService
     public Task<GetProjectResponse> GetProject(int projectId, string userId);
     public Task AcceptInvitation(int projectId, string userId);
     public IEnumerable<UserShortInfo> GetProjectUsers(int projectId, string userId);
-    
 }

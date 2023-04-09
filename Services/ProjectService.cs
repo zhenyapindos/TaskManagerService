@@ -185,6 +185,8 @@ public class ProjectService : IProjectService
         }
 
         _context.ProjectUsers.Remove(resultUser);
+        _context.TaskUsers.Remove(_context.TaskUsers.FirstOrDefault(x => x.User == resultUser.User)!);
+        //_context.EventUsers.Remove(_context.EventUsers.FirstOrDefault(x => x.User == resultUser.User)!);
         await _context.SaveChangesAsync();
 
         return (project, user);

@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using StasDiplom.Context;
 using StasDiplom.Domain;
 using StasDiplom.Dto;
+using StasDiplom.Dto.Event;
 using StasDiplom.Dto.Notification;
 using StasDiplom.Dto.Project;
 using StasDiplom.Dto.Task;
@@ -85,7 +87,7 @@ public class NotificationService : INotificationService
             var newNotificationInfo = _mapper.Map<NotificationInfo>(notification);
             newNotificationInfo.ShortTaskInfo = _mapper.Map<ShortTaskInfo>(notification.Task);
             newNotificationInfo.ShortProjectInfo = _mapper.Map<ShortProjectInfo>(notification.Project);
-            //ToDo: ShortEventInfo = _mapper.Map<ShortProjectInfo>(notification.Event);
+            newNotificationInfo.ShortEventInfo = _mapper.Map<ShortEventInfo>(notification.Event);
             newNotificationInfo.Title = notification.Task == null ? notification.Project.Title : notification.Task.Title;
 
             notificationsInfo.Add(newNotificationInfo);
@@ -111,9 +113,24 @@ public class NotificationService : INotificationService
 
     public async Task<List<NotificationInfo>> GetAllNotificationsInfo(User user)
     {
-        user.Notifications = _context.Notifications.Where(x => x.User == user).ToList();
+        user.Notifications = _context.Notifications
+            .Include(x=> x.Project)
+            .Include(x=>x.Task)
+            .Include(x=> x.Event)
+            .Where(x => x.User == user).ToList();
 
-        return user.Notifications.Select(notification => _mapper.Map<NotificationInfo>(notification)).ToList();
+        var notificationInfos = new List<NotificationInfo>();
+        foreach (var notification in user.Notifications)
+        {
+            var notificationInfo = _mapper.Map<NotificationInfo>(notification);
+            notificationInfo.ShortTaskInfo = _mapper.Map<ShortTaskInfo>(notification.Task);
+            notificationInfo.ShortProjectInfo = _mapper.Map<ShortProjectInfo>(notification.Project);
+            notificationInfo.ShortEventInfo = _mapper.Map<ShortEventInfo>(notification.Event);
+            
+            notificationInfos.Add(notificationInfo);
+        }
+
+        return notificationInfos;
     }
 
     public async Task<Notification> EventCreated(User user, Event eventId)

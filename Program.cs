@@ -24,7 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
+    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
 
 builder.Services.AddAutoMapper(config =>
 {

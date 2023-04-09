@@ -25,12 +25,12 @@ namespace StasDiplom.Controllers;
 public class TaskController : Controller
 {
     private readonly ProjectManagerContext _context;
-    private readonly UserManager<User> _userManager; 
+    private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
     private readonly ITaskService _taskService;
-    
-    public TaskController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, 
+
+    public TaskController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper,
         INotificationService service, ITaskService taskService)
     {
         _context = context;
@@ -59,7 +59,7 @@ public class TaskController : Controller
             {
                 {Message: "Project is not found"} => NotFound(),
                 {Message: "User is not in project"} => Forbid(),
-                _ => Problem() 
+                _ => Problem()
             };
         }
         catch (InvalidOperationException)
@@ -68,7 +68,7 @@ public class TaskController : Controller
         }
     }
 
-    
+
     [Authorize]
     [HttpGet("/api/task/{taskId:int}")]
     [ProducesResponseType(401)]
@@ -136,7 +136,7 @@ public class TaskController : Controller
         {
             return Forbid();
         }
-        
+
         return Ok();
     }
 
@@ -148,7 +148,7 @@ public class TaskController : Controller
     public async Task<IActionResult> AssignUser([FromBody] UserTaskInterractionRequest request)
     {
         var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
-        
+
         DomainTask task;
         User user;
 
@@ -169,12 +169,12 @@ public class TaskController : Controller
         {
             return NotFound();
         }
-        
+
         await _notificationService.TaskAssignUser(task, user);
-        
+
         return Ok();
     }
-    
+
     [Authorize]
     [HttpPost("/api/task/unassign-user")]
     [ProducesResponseType(401)]
@@ -201,10 +201,10 @@ public class TaskController : Controller
         {
             return NotFound();
         }
-        
+
         return Ok();
     }
-    
+
     [Authorize]
     [HttpPut("/api/task/{taskId}/done")]
     [ProducesResponseType(401)]
@@ -226,7 +226,7 @@ public class TaskController : Controller
         {
             return Forbid();
         }
-        
+
         return Ok();
     }
 }
