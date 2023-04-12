@@ -13,4 +13,5 @@ public interface IEventService
     public Task AssignUser(UserEventInteractionRequest request, string id);
     public Task UnassignUser(UserEventInteractionRequest request, string id);
     public Task PostTaskAsEvent(int taskId, string id);
+    public Task<EventInfo> GetEventInfo(int eventId, string id);
 }

@@ -15,23 +15,33 @@ namespace StasDiplom.Services;
 public class EventService : IEventService
 {
     private readonly ProjectManagerContext _context;
-    private readonly ICalendarService _calendarService;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
     private readonly ILogger<EventService> _logger;
 
-    public EventService(ProjectManagerContext context, IMapper mapper, UserManager<User> userManager,
-        ICalendarService calendarService, INotificationService notificationService, ILogger<EventService> logger)
+    public EventService(ProjectManagerContext context, IMapper mapper, UserManager<User> userManager, 
+        INotificationService notificationService, ILogger<EventService> logger)
     {
         _context = context;
         _mapper = mapper;
         _userManager = userManager;
-        _calendarService = calendarService;
         _notificationService = notificationService;
         _logger = logger;
     }
 
+    public async Task<EventInfo> GetEventInfo(int eventId, string id)
+    {
+        var user = _userManager.FindByIdAsync(id).Result;
+        
+        if (user == null)
+        {
+            throw new ArgumentNullException();
+        }
+        var findedEvent = _context.Events.FirstOrDefault(x => x.Id == eventId);
+        
+        return _mapper.Map<EventInfo>(findedEvent);
+    }
     public async Task<EventInfo> CreateEvent(CreateEventRequest request, string id)
     {
         var calendar = _context.Calendars.FirstOrDefault(x => x.Id == request.CalendarId);
@@ -77,9 +87,17 @@ public class EventService : IEventService
 
         var newEvent = _mapper.Map<Event>(request) with
         {
-            EventType = EventType.Meeting,
             CreatorId = id
         };
+
+        if (request.MeetingLink == null)
+        {
+            newEvent.EventType = (EventType) 2;
+        }
+        else
+        {
+            newEvent.EventType = (EventType) 0;
+        }
 
         _context.Events.Add(newEvent);
         await _context.SaveChangesAsync();
@@ -93,7 +111,8 @@ public class EventService : IEventService
                 var eventUser = new EventUser()
                 {
                     Event = newEvent,
-                    User = user
+                    User = user,
+                    EventType = newEvent.EventType
                 };
 
                 await _notificationService.EventCreated(user, newEvent);

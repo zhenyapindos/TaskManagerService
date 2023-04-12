@@ -12,6 +12,7 @@ using StasDiplom.Dto.Users.Project;
 using StasDiplom.Enum;
 using StasDiplom.Services.Interfaces;
 using Task = System.Threading.Tasks.Task;
+using TaskStatus = System.Threading.Tasks.TaskStatus;
 
 namespace StasDiplom.Services;
 
@@ -95,12 +96,12 @@ public class ProjectService : IProjectService
                 if (!task.TaskUsers.Contains(currentTaskUser!)) continue;
                 
                 var mappedTask = _mapper.Map<TaskShortInfo>(task);
-                    
-                if (task.Deadline != null)
+
+                if (mappedTask.Deadline is null)
                 {
-                    mappedTask.Deadline = (DateTime) task.Deadline!;
+                    mappedTask.TaskStatus = (TaskStatus) 3;
                 }
-                    
+
                 responseElement.TaskList.Add(mappedTask);
             }
             
@@ -326,7 +327,14 @@ public class ProjectService : IProjectService
 
         foreach (var task in project.Tasks)
         {
-            response.TaskList.Add(_mapper.Map<TaskShortInfo>(task));
+            var mappedTask = _mapper.Map<TaskShortInfo>(task);
+            
+            if (mappedTask.Deadline == null)
+            {
+                mappedTask.TaskStatus = (TaskStatus) 3;
+            }
+            
+            response.TaskList.Add(mappedTask);
         }
 
         return response;

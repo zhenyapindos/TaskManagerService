@@ -60,8 +60,7 @@ public class TaskService : ITaskService
         var newTask = _mapper.Map<DomainTask>(request) with
         {
             CreationTime = DateTime.UtcNow,
-            Project = project,
-            TaskStatus = TaskStatus.Created
+            Project = project
         };
 
         if (request.ParentTaskId != null)
@@ -79,7 +78,12 @@ public class TaskService : ITaskService
         if (request.StartDate != null)
         {
             newTask.Deadline = request.StartDate.Value.AddHours(request.DurationHours);
+        }
+
+        if (request.StartDate == null)
+        {
             newTask.TaskStatus = TaskStatus.Created;
+            newTask.Deadline = null;
         }
 
         if (newTask.StartDate > DateTime.UtcNow)
@@ -165,7 +169,12 @@ public class TaskService : ITaskService
             response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
         }
 
-        if (task.TaskStatus != TaskStatus.Done)
+        if (task.StartDate == null)
+        {
+            response.Deadline = null;
+            response.Status = TaskStatus.Created;
+        }
+        else if (task.TaskStatus != TaskStatus.Done)
         {
             if (task.StartDate > DateTime.UtcNow)
             {
@@ -242,7 +251,7 @@ public class TaskService : ITaskService
             ProjectId = projectId
         };
 
-        if (newTask.DurationHours != null && newTask.StartDate != null)
+        if (newTask is {DurationHours: not null, StartDate: not null})
         {
             newTask.Deadline = newTask.StartDate.Value.AddHours((double) newTask.DurationHours);
         }

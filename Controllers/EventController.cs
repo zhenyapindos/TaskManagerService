@@ -170,4 +170,13 @@ public class EventController : Controller
         
         return Ok();
     }
+
+    [Authorize]
+    [HttpGet("event-info/{eventId:int}")]
+    public async Task<IActionResult> GetEventInfo([FromRoute] int eventId)
+    {
+        var userId = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+        
+        return Ok(await _eventService.GetEventInfo(eventId, userId));
+    }
 }
