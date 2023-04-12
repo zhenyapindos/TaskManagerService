@@ -159,4 +159,15 @@ public class EventController : Controller
 
         return Ok();
     }
+
+    [Authorize]
+    [HttpPost("from-task/{taskId:int}")]
+    public async Task<IActionResult> PostEventFromTask([FromRoute] int taskId)
+    {
+        var userId = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+
+        await _eventService.PostTaskAsEvent(taskId, userId);
+        
+        return Ok();
+    }
 }

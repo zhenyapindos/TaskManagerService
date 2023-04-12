@@ -1,4 +1,5 @@
 ﻿using StasDiplom.Enum;
+using TaskService.Enum;
 
 namespace StasDiplom.Domain;
 
@@ -8,7 +9,6 @@ public record Event
     public int CalendarId { get; set; }
     public string Title { get; set; }
     public string? Description { get; set; }
-    //public int? TaskId { get; set; }
     public string? MeetingLink { get; set; }
     public EventType EventType { get; set; }
     public DateTime Start { get; set; }
@@ -18,5 +18,5 @@ public record Event
     public ICollection<User> Users { get; set; }
     public ICollection<EventUser> EventUsers { get; set; }
     public Calendar Calendar { get; set; }
-    //public Task? Task { get; set; }
+    public Task? Task { get; set; }
 }

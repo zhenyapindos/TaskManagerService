@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StasDiplom", "StasDiplom.csproj", "{8CD68D9D-7DA1-4B7A-ACA7-E105A5387360}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskService", "TaskService.csproj", "{8CD68D9D-7DA1-4B7A-ACA7-E105A5387360}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

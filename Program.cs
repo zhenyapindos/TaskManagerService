@@ -18,13 +18,15 @@ using StasDiplom.Dto.Task;
 using StasDiplom.Dto.Users;
 using StasDiplom.Services;
 using StasDiplom.Services.Interfaces;
+using TaskService.Services;
+using TaskService.Services.Interfaces;
 using Task = StasDiplom.Domain.Task;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
+    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
 
 builder.Services.AddAutoMapper(config =>
 {
@@ -197,7 +199,8 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
-builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ITaskService, StasDiplom.Services.TaskService>();
+builder.Services.AddScoped<ICommentsService, CommentsService>();    
 builder.Services.AddSingleton<INotificationDictionaryService, NotificationDictionaryService>();
 
 var app = builder.Build();

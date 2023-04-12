@@ -25,7 +25,7 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         modelBuilder
             .CommentToProject()
             .CommentToTask()
@@ -42,6 +42,7 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
             //.TaskToEvent()
             .CommentToNotification()
             .EventToEventUsers();
+        //.EventToTask();
     }
 
     

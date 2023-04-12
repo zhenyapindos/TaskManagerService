@@ -1,4 +1,5 @@
 ﻿using StasDiplom.Enum;
+using TaskService.Enum;
 
 namespace StasDiplom.Domain;
 

@@ -11,6 +11,7 @@ using StasDiplom.Dto.Users;
 using StasDiplom.Dto.Users.Task;
 using StasDiplom.Enum;
 using StasDiplom.Services.Interfaces;
+using TaskService.Enum;
 using Task = System.Threading.Tasks.Task;
 using DomainTask = StasDiplom.Domain.Task;
 using TaskStatus = StasDiplom.Enum.TaskStatus;
@@ -22,12 +23,13 @@ public class TaskService : ITaskService
     private readonly ProjectManagerContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
-
-    public TaskService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper)
+    private readonly IEventService _eventService;
+    public TaskService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, IEventService eventService)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
+        _eventService = eventService;
     }
 
     public async Task<TaskShortInfo> CreateTask(CreateTaskRequest request, string userId)
@@ -282,6 +284,7 @@ public class TaskService : ITaskService
             .Include(x => x.TaskUsers)
             .Include(x => x.Project)
             .ThenInclude(x => x.ProjectUsers)
+            .Include(x=> x.Events)
             .FirstOrDefault(x => x.Id == taskId);
 
         if (task == null)
@@ -304,12 +307,17 @@ public class TaskService : ITaskService
             throw new InvalidOperationException("User has no permissions");
         }
 
-        var previousTasks = _context.Tasks.Where(x => x.PreviousTaskId! == taskId);
+        var previousTasks = _context.Tasks
+            .Where(x => x.PreviousTaskId! == taskId)
+            .Include(x => x.Events);
         DeletePreviousTasks(previousTasks);
 
-        var childTasks = _context.Tasks.Where(x => x.ParentTaskId! == taskId);
+        var childTasks = _context.Tasks
+            .Where(x => x.ParentTaskId! == taskId)
+            .Include(x => x.Events);
         DeleteChildTasks(childTasks);
 
+        _context.RemoveRange(_context.Events.Where(x=> x.EventType == EventType.TaskEvent && x.Task == task));
         _context.Remove(task);
 
         await _context.SaveChangesAsync();
@@ -320,8 +328,16 @@ public class TaskService : ITaskService
         foreach (var task in previousTasks)
         {
             var childTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
-            DeleteChildTasks(childTasks);
+            var eventList = _context.Events.Where(x => x.EventType == EventType.TaskEvent && x.Task == task);
 
+            foreach (var events in eventList)
+            {
+                _context.Events.Remove(events);
+            }
+            
+            DeleteChildTasks(childTasks);
+            
+            _context.RemoveRange(eventList);
             task.PreviousTaskId = null;
         }
     }
@@ -331,11 +347,17 @@ public class TaskService : ITaskService
         foreach (var task in childTasks)
         {
             var previousTasks = _context.Tasks.Where(x => x.PreviousTaskId! == task.Id);
+            var eventList = _context.Events.Where(x => x.EventType == EventType.TaskEvent && x.Task == task);
+            foreach (var events in eventList)
+            {
+                _context.Events.Remove(events);
+            }
+
             DeletePreviousTasks(previousTasks);
 
             var currentChildTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
             DeleteChildTasks(currentChildTasks);
-
+            
             _context.Remove(task);
         }
     }

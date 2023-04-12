@@ -8,6 +8,7 @@ using StasDiplom.Dto.Event;
 using StasDiplom.Dto.Users.Event;
 using StasDiplom.Enum;
 using StasDiplom.Services.Interfaces;
+using TaskService.Enum;
 
 namespace StasDiplom.Services;
 
@@ -102,16 +103,16 @@ public class EventService : IEventService
 
         var currentUser = _userManager.FindByIdAsync(id).Result;
         await _notificationService.EventCreated(currentUser, newEvent);
-        
+
         var currentEventUser = new EventUser()
         {
             User = currentUser,
             Event = newEvent,
             EventType = newEvent.EventType
         };
-        
+
         _context.EventUsers.Add(currentEventUser);
-        
+
         await _context.SaveChangesAsync();
 
         var eventUsers = _context.EventUsers.Where(x => x.EventId == newEvent.Id).ToList();
@@ -126,14 +127,14 @@ public class EventService : IEventService
     public async Task<EventInfo> UpdateEvent(UpdateEventRequest request, string id)
     {
         var oldEvent = _context.Events
-            .Include(x=>x.EventUsers)
+            .Include(x => x.EventUsers)
             .FirstOrDefault(x => x.Id == request.Id);
 
         if (oldEvent == null)
         {
             throw new ArgumentException();
         }
-        
+
         var user = oldEvent.EventUsers.FirstOrDefault(x => x.UserId == id);
 
         if (user == null && oldEvent.CreatorId != id)
@@ -153,14 +154,14 @@ public class EventService : IEventService
 
     public void DeleteEvent(int eventId, string id)
     {
-        var eventForDeleting = _context.Events.Include(x=> x.EventUsers)
-            .FirstOrDefault(x=> x.Id == eventId);
-        
+        var eventForDeleting = _context.Events.Include(x => x.EventUsers)
+            .FirstOrDefault(x => x.Id == eventId);
+
         if (eventForDeleting == null)
         {
             throw new ArgumentException();
         }
-        
+
         var user = eventForDeleting.EventUsers.FirstOrDefault(x => x.UserId == id);
 
         if (user == null && eventForDeleting.CreatorId != id)
@@ -170,27 +171,27 @@ public class EventService : IEventService
 
         _context.Events.Remove(eventForDeleting);
         _context.SaveChangesAsync();
-        
+
         _logger.LogInformation("Delete succsesfulliation");
     }
 
     public async System.Threading.Tasks.Task AssignUser(UserEventInteractionRequest request, string id)
     {
-        var eventForAssigment = _context.Events.Include(x=> x.EventUsers)
-            .FirstOrDefault(x=> x.Id == request.EventId);
+        var eventForAssigment = _context.Events.Include(x => x.EventUsers)
+            .FirstOrDefault(x => x.Id == request.EventId);
 
         if (eventForAssigment == null)
         {
             throw new ArgumentException();
         }
-        
+
         var addingUser = await _userManager.FindByNameAsync(request.Username);
-        
+
         if (addingUser == null)
         {
             throw new ArgumentException();
         }
-        
+
         var calendar = _context.Calendars.FirstOrDefault(x => x.Id == eventForAssigment.CalendarId);
 
         if (calendar.ProjectId == null)
@@ -198,8 +199,8 @@ public class EventService : IEventService
             throw new InvalidOperationException();
         }
 
-        var userList = _context.ProjectUsers.Include(x=> x.User)
-            .Where(x => x.ProjectId == calendar.ProjectId).Select(x=> x.User).ToList();
+        var userList = _context.ProjectUsers.Include(x => x.User)
+            .Where(x => x.ProjectId == calendar.ProjectId).Select(x => x.User).ToList();
 
         if (userList.All(x => x.UserName != addingUser.UserName))
         {
@@ -232,7 +233,7 @@ public class EventService : IEventService
         eventForAssigment.EventUsers.Add(newEventUser);
         _context.EventUsers.Add(newEventUser);
         await _notificationService.EventCreated(addingUser, eventForAssigment);
-            
+
         await _context.SaveChangesAsync();
     }
 
@@ -245,11 +246,12 @@ public class EventService : IEventService
         {
             throw new ArgumentException();
         }
-        
+
         if (eventForUnassigment.CreatorId != id)
         {
             throw new InvalidOperationException();
         }
+
         var deletingUser = await _userManager.FindByNameAsync(request.Username);
 
         if (deletingUser == null || eventForUnassigment.CreatorId == deletingUser.Id)
@@ -297,5 +299,42 @@ public class EventService : IEventService
         eventForUnassigment.EventUsers.Remove(eventUnassignedUser);
         _context.EventUsers.Remove(eventUnassignedUser);
         await _context.SaveChangesAsync();
+    }
+
+    public async System.Threading.Tasks.Task PostTaskAsEvent(int taskId, string userId)
+    {
+        var user = _userManager.FindByIdAsync(userId).Result;
+
+        var taskForEvent = _context.Tasks
+            .Include(x => x.Project)
+            .ThenInclude(x => x.Calendar)
+            .FirstOrDefault(x => x.Id == taskId);
+
+        var taskEvent = new Event
+        {
+            Title = taskForEvent.Title + "'s task event",
+            CalendarId = (int) taskForEvent.Project.CalendarId,
+            EventType = EventType.TaskEvent,
+            Start = (DateTime) taskForEvent.StartDate,
+            End = (DateTime) taskForEvent.Deadline,
+            CreatorId = user.Id,
+            Task = taskForEvent
+        };
+
+        _context.Events.Add(taskEvent);
+        await _context.SaveChangesAsync();
+
+        
+        var newEventUser = new EventUser()
+        {
+            Event = taskEvent,
+            User = user,
+            EventType = EventType.TaskEvent
+        };
+
+        _context.EventUsers.Add(newEventUser);
+        await _context.SaveChangesAsync();
+
+        //return _mapper.Map<EventInfo>(taskEvent);
     }
 }
