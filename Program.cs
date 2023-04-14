@@ -18,6 +18,7 @@ using StasDiplom.Dto.Task;
 using StasDiplom.Dto.Users;
 using StasDiplom.Services;
 using StasDiplom.Services.Interfaces;
+using TaskService.Dto;
 using TaskService.Services;
 using TaskService.Services.Interfaces;
 using Task = StasDiplom.Domain.Task;
@@ -26,7 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
+    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
 
 builder.Services.AddAutoMapper(config =>
 {
@@ -101,6 +102,7 @@ builder.Services.AddAutoMapper(config =>
     config.CreateMap<User, UserShortInfo>(MemberList.Destination);
     
     config.CreateMap<Task, TaskShortInfo>(MemberList.Destination);
+    config.CreateMap<Task, TaskShortInfoWithSubTasks>(MemberList.Destination);
     
     config.CreateMap<Task, ShortTaskInfo>(MemberList.Destination);
     
@@ -117,9 +119,9 @@ builder.Services.AddAutoMapper(config =>
     config.CreateMap<CreateEventRequest, Event>(MemberList.Source);
 
     config.CreateMap<Event, EventInfo>(MemberList.Destination)
-        .ForMember(x=> x.AssignedUsernames,
+        .ForMember(x => x.AssignedUsernames,
             opt => opt.MapFrom(
-                src => src.EventUsers.Select(x=> x.User.UserName)));
+                src => src.EventUsers.Select(x => x.User)));
 
     config.CreateMap<UpdateEventRequest, Event>(MemberList.Source);
 });

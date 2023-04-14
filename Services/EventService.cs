@@ -32,15 +32,26 @@ public class EventService : IEventService
 
     public async Task<EventInfo> GetEventInfo(int eventId, string id)
     {
-        var user = _userManager.FindByIdAsync(id).Result;
+        var user = await _userManager.FindByIdAsync(id);
         
         if (user == null)
         {
             throw new ArgumentNullException();
         }
-        var findedEvent = _context.Events.FirstOrDefault(x => x.Id == eventId);
         
-        return _mapper.Map<EventInfo>(findedEvent);
+        var findedEvent = _context.Events
+            .Include(x=> x.Calendar)
+            .FirstOrDefault(x => x.Id == eventId);
+        
+        var eventUsernames = _context.EventUsers
+            .Where(x => x.EventId == findedEvent.Id)
+            .Select(x=> x.User.UserName).ToList();
+        
+        return _mapper.Map<EventInfo>(findedEvent) with
+        {
+            CreatorUsername = user.UserName,
+            AssignedUsernames = eventUsernames
+        };
     }
     public async Task<EventInfo> CreateEvent(CreateEventRequest request, string id)
     {
@@ -160,15 +171,44 @@ public class EventService : IEventService
         {
             throw new InvalidOperationException();
         }
-
+        
         oldEvent.Description = request.Description;
-        oldEvent.MeetingLink = request.MeetingLink;
-        oldEvent.Title = request.Title;
+
+        if (request.Title != null)
+        {
+            oldEvent.Title = request.Title;
+        }
+        
+        if (request.Description != null)
+        {
+            oldEvent.Description = request.Description;
+        }
+        
+        if (request.MeetingLink != null)
+        {
+            oldEvent.MeetingLink = request.MeetingLink;
+            oldEvent.EventType = (EventType) 0;
+        }
+        else
+        {
+            oldEvent.MeetingLink = null;
+            oldEvent.EventType = EventType.Other;
+        }
 
         _context.Events.Update(oldEvent);
         await _context.SaveChangesAsync();
 
-        return _mapper.Map<EventInfo>(oldEvent);
+        var eventUsers = _context.EventUsers
+            .Where(x => x.EventId == request.Id)
+            .Select(x=>x.User.UserName).ToList();
+
+        var info = _mapper.Map<EventInfo>(oldEvent) with
+        {
+            CreatorUsername = (await _userManager.FindByIdAsync(id)).UserName,
+            AssignedUsernames = eventUsers
+        };
+
+        return info;
     }
 
     public void DeleteEvent(int eventId, string id)
@@ -213,15 +253,15 @@ public class EventService : IEventService
 
         var calendar = _context.Calendars.FirstOrDefault(x => x.Id == eventForAssigment.CalendarId);
 
-        if (calendar.ProjectId == null)
+        if (calendar == null)
         {
             throw new InvalidOperationException();
         }
 
         var userList = _context.ProjectUsers.Include(x => x.User)
-            .Where(x => x.ProjectId == calendar.ProjectId).Select(x => x.User).ToList();
+            .Where(x => x.Project.Calendar == calendar).Select(x => x.User).ToList();
 
-        if (userList.All(x => x.UserName != addingUser.UserName))
+        if (!userList.All(x => x.UserName != addingUser.UserName))
         {
             throw new InvalidOperationException();
         }
@@ -280,15 +320,15 @@ public class EventService : IEventService
 
         var calendar = _context.Calendars.FirstOrDefault(x => x.Id == eventForUnassigment.CalendarId);
 
-        if (calendar.ProjectId == null)
+        if (calendar == null)
         {
             throw new InvalidOperationException();
         }
 
         var userList = _context.ProjectUsers.Include(x => x.User)
-            .Where(x => x.ProjectId == calendar.ProjectId).Select(x => x.User).ToList();
+            .Where(x => x.Project.Calendar == calendar).Select(x => x.User).ToList();
 
-        if (userList.All(x => x.UserName != deletingUser.UserName))
+        if (!userList.All(x => x.UserName != deletingUser.UserName))
         {
             throw new InvalidOperationException();
         }
@@ -329,14 +369,19 @@ public class EventService : IEventService
             .ThenInclude(x => x.Calendar)
             .FirstOrDefault(x => x.Id == taskId);
 
+        if (taskForEvent.StartDate == null || taskForEvent.Deadline == null)
+        {
+            throw new ArgumentNullException();
+        }
+
         var taskEvent = new Event
         {
             Title = taskForEvent.Title + "'s task event",
-            CalendarId = (int) taskForEvent.Project.CalendarId,
-            EventType = EventType.TaskEvent,
-            Start = (DateTime) taskForEvent.StartDate,
-            End = (DateTime) taskForEvent.Deadline,
-            CreatorId = user.Id,
+            Calendar = taskForEvent.Project.Calendar,
+            EventType = (EventType) 1,
+            Start = taskForEvent.StartDate.GetValueOrDefault(),
+            End = taskForEvent.Deadline.GetValueOrDefault(),
+            CreatorId = userId,
             Task = taskForEvent
         };
 
@@ -353,7 +398,5 @@ public class EventService : IEventService
 
         _context.EventUsers.Add(newEventUser);
         await _context.SaveChangesAsync();
-
-        //return _mapper.Map<EventInfo>(taskEvent);
     }
 }

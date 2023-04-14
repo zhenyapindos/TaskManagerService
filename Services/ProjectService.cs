@@ -11,6 +11,7 @@ using StasDiplom.Dto.Users;
 using StasDiplom.Dto.Users.Project;
 using StasDiplom.Enum;
 using StasDiplom.Services.Interfaces;
+using TaskService.Dto;
 using Task = System.Threading.Tasks.Task;
 using TaskStatus = System.Threading.Tasks.TaskStatus;
 
@@ -43,7 +44,7 @@ public class ProjectService : IProjectService
             UserProjectRole = UserProjectRole.Admin,
             Project = newProject
         };
-
+        
         await _context.ProjectUsers.AddAsync(projectUser);
 
         await _context.SaveChangesAsync();
@@ -323,16 +324,22 @@ public class ProjectService : IProjectService
 
         response.UserList = users;
         response.UserProjectRole = resultUser.UserProjectRole;
-        response.TaskList = new List<TaskShortInfo>();
+        response.TaskList = new List<TaskShortInfoWithSubTasks>();
 
         foreach (var task in project.Tasks)
         {
-            var mappedTask = _mapper.Map<TaskShortInfo>(task);
+            var mappedTask = _mapper.Map<TaskShortInfoWithSubTasks>(task);
             
             if (mappedTask.Deadline == null)
             {
                 mappedTask.TaskStatus = (TaskStatus) 3;
             }
+
+            var parentTask = _context.Tasks.FirstOrDefault(x => x.Id == task.ParentTaskId);
+            var previousTask = _context.Tasks.FirstOrDefault(x => x.Id == task.PreviousTaskId);
+
+            mappedTask.ParentTask = _mapper.Map<TaskShortInfoWithSubTasks>(parentTask!);
+            mappedTask.PreviousTask = _mapper.Map<TaskShortInfoWithSubTasks>(previousTask!);
             
             response.TaskList.Add(mappedTask);
         }
