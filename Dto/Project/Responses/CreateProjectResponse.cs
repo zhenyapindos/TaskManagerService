@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Project.Responses;
+﻿namespace TaskService.Dto.Project.Responses;
 
 public class CreateProjectResponse
 {

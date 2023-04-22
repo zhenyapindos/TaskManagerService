@@ -1,15 +1,10 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Users.Login;
-using StasDiplom.Dto.Users.Register;
-using StasDiplom.Services.Interfaces;
-using StasDiplom.Utility;
+﻿using Microsoft.AspNetCore.Mvc;
+using TaskService.Domain;
+using TaskService.Dto.Users.Login;
+using TaskService.Dto.Users.Register;
+using TaskService.Services.Interfaces;
 
-namespace StasDiplom.Controllers;
+namespace TaskService.Controllers;
 
 [ApiController]
 [Route("api/account/")]

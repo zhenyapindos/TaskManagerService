@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Event;
+﻿namespace TaskService.Dto.Event;
 
 public class UpdateEventRequest
 {

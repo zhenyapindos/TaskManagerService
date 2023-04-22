@@ -2,23 +2,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Project.Responses;
-using StasDiplom.Dto.Task;
-using StasDiplom.Dto.Users;
-using StasDiplom.Dto.Users.Task;
-using StasDiplom.Enum;
-using StasDiplom.Services;
-using StasDiplom.Services.Interfaces;
-using StasDiplom.Utility;
-using Task = System.Threading.Tasks.Task;
-using TaskStatus = StasDiplom.Enum.TaskStatus;
-using DomainTask = StasDiplom.Domain.Task;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Task;
+using TaskService.Dto.Users.Task;
+using TaskService.Services.Interfaces;
+using TaskService.Utility;
+using DomainTask = TaskService.Domain.Task;
 
-namespace StasDiplom.Controllers;
+namespace TaskService.Controllers;
 
 [ApiController]
 [Route("api/task/")]

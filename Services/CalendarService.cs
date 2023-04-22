@@ -1,14 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto;
-using StasDiplom.Dto.Calendar;
-using StasDiplom.Services.Interfaces;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Calendar;
+using TaskService.Services.Interfaces;
 using Task = System.Threading.Tasks.Task;
 
-namespace StasDiplom.Services;
+namespace TaskService.Services;
 
 public class CalendarService : ICalendarService
 {

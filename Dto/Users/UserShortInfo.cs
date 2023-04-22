@@ -1,6 +1,6 @@
-﻿using StasDiplom.Enum;
+﻿using TaskService.Enum;
 
-namespace StasDiplom.Dto.Users;
+namespace TaskService.Dto.Users;
 
 public record UserShortInfo
 {

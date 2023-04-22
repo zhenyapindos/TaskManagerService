@@ -1,8 +1,8 @@
-﻿using StasDiplom.Domain;
-using StasDiplom.Dto.Notification;
-using Task = StasDiplom.Domain.Task;
+﻿using TaskService.Domain;
+using TaskService.Dto.Notification;
+using Task = TaskService.Domain.Task;
 
-namespace StasDiplom.Services.Interfaces;
+namespace TaskService.Services.Interfaces;
 
 public interface INotificationService
 {

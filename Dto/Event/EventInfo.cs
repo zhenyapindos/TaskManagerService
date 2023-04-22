@@ -1,7 +1,6 @@
-﻿using StasDiplom.Enum;
-using TaskService.Enum;
+﻿using TaskService.Enum;
 
-namespace StasDiplom.Dto.Event;
+namespace TaskService.Dto.Event;
 
 public record EventInfo
 {

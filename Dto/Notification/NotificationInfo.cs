@@ -1,9 +1,9 @@
-﻿using StasDiplom.Dto.Event;
-using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Task;
-using StasDiplom.Enum;
+﻿using TaskService.Dto.Event;
+using TaskService.Dto.Project;
+using TaskService.Dto.Task;
+using TaskService.Enum;
 
-namespace StasDiplom.Dto.Notification;
+namespace TaskService.Dto.Notification;
 
 public class NotificationInfo
 {

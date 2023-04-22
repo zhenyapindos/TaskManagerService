@@ -2,15 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Event;
-using StasDiplom.Dto.Users.Event;
-using StasDiplom.Services;
-using StasDiplom.Services.Interfaces;
-using StasDiplom.Utility;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Event;
+using TaskService.Dto.Users.Event;
+using TaskService.Services.Interfaces;
+using TaskService.Utility;
 
-namespace StasDiplom.Controllers;
+namespace TaskService.Controllers;
 
 
 [ApiController]

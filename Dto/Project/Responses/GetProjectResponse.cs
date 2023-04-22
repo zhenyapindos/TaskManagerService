@@ -1,11 +1,7 @@
-﻿using StasDiplom.Domain;
-using StasDiplom.Dto.Task;
-using StasDiplom.Dto.Users;
-using StasDiplom.Enum;
-using TaskService.Dto;
-using Task = StasDiplom.Domain.Task;
+﻿using TaskService.Dto.Users;
+using TaskService.Enum;
 
-namespace StasDiplom.Dto.Project.Responses;
+namespace TaskService.Dto.Project.Responses;
 
 public record GetProjectResponse
 {

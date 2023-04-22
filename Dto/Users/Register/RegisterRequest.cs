@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Users.Register;
+﻿namespace TaskService.Dto.Users.Register;
 
 public class RegisterRequest
 {  

@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Enum;
+﻿namespace TaskService.Enum;
 
 public enum TaskRole
 {

@@ -1,21 +1,21 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Project.Requests;
-using StasDiplom.Dto.Project.Responses;
-using StasDiplom.Dto.Task;
-using StasDiplom.Dto.Users;
-using StasDiplom.Dto.Users.Project;
-using StasDiplom.Enum;
-using StasDiplom.Services.Interfaces;
+using TaskService.Context;
+using TaskService.Domain;
 using TaskService.Dto;
+using TaskService.Dto.Project;
+using TaskService.Dto.Project.Requests;
+using TaskService.Dto.Project.Responses;
+using TaskService.Dto.Task;
+using TaskService.Dto.Users;
+using TaskService.Dto.Users.Project;
+using TaskService.Enum;
+using TaskService.Services.Interfaces;
 using Task = System.Threading.Tasks.Task;
 using TaskStatus = System.Threading.Tasks.TaskStatus;
 
-namespace StasDiplom.Services;
+namespace TaskService.Services;
 
 public class ProjectService : IProjectService
 {
@@ -186,8 +186,10 @@ public class ProjectService : IProjectService
             throw new ArgumentException("User is not in project");
         }
 
+        var taskUser = _context.TaskUsers.Where(x=> x.User == user && x.Task.ProjectId == project.Id);
+
         _context.ProjectUsers.Remove(resultUser);
-        _context.TaskUsers.Remove(_context.TaskUsers.FirstOrDefault(x => x.User == resultUser.User)!);
+        _context.TaskUsers.RemoveRange(taskUser);
         //_context.EventUsers.Remove(_context.EventUsers.FirstOrDefault(x => x.User == resultUser.User)!);
         await _context.SaveChangesAsync();
 

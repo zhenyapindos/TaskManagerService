@@ -1,5 +1,5 @@
-﻿namespace StasDiplom.Dto.Comment;
-using Comment = Domain.Comment;
+﻿namespace TaskService.Dto.Comment;
+
 public record GetCommentsResponse
 {
     public IEnumerable<CommentResponse> Comments { get; set; }

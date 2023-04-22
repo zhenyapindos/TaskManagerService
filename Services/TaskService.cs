@@ -1,22 +1,19 @@
-﻿using System.Net;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Task;
-using StasDiplom.Dto.Users;
-using StasDiplom.Dto.Users.Task;
-using StasDiplom.Enum;
-using StasDiplom.Services.Interfaces;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Project;
+using TaskService.Dto.Task;
+using TaskService.Dto.Users;
+using TaskService.Dto.Users.Task;
 using TaskService.Enum;
+using TaskService.Services.Interfaces;
 using Task = System.Threading.Tasks.Task;
-using DomainTask = StasDiplom.Domain.Task;
-using TaskStatus = StasDiplom.Enum.TaskStatus;
+using DomainTask = TaskService.Domain.Task;
+using TaskStatus = TaskService.Enum.TaskStatus;
 
-namespace StasDiplom.Services;
+namespace TaskService.Services;
 
 public class TaskService : ITaskService
 {

@@ -1,6 +1,4 @@
-﻿using TaskStatus = StasDiplom.Enum.TaskStatus;
-
-namespace StasDiplom.Dto.Task;
+﻿namespace TaskService.Dto.Task;
 
 public record UpdateTaskRequest
 {

@@ -1,15 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Project.Requests;
-using StasDiplom.Dto.Project.Responses;
-using StasDiplom.Dto.Users.Project;
-using StasDiplom.Services.Interfaces;
-using StasDiplom.Utility;
-using MyTask = StasDiplom.Domain.Task;
+using TaskService.Domain;
+using TaskService.Dto.Project.Requests;
+using TaskService.Dto.Project.Responses;
+using TaskService.Dto.Users.Project;
+using TaskService.Services.Interfaces;
+using TaskService.Utility;
 
-namespace StasDiplom.Controllers;
+namespace TaskService.Controllers;
 
 [ApiController]
 [Route("api/project/")]
@@ -202,7 +201,7 @@ public class ProjectController : Controller
 
         try
         {
-            return Ok(_projectService.DeleteProject(request, id));
+            await _projectService.DeleteProject(request, id);
         }
         catch (ArgumentException e)
         {
@@ -214,6 +213,8 @@ public class ProjectController : Controller
                 _ => Problem()
             };
         }
+
+        return Ok();
     }
 
     [Authorize]

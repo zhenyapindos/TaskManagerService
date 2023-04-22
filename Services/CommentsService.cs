@@ -1,15 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Comment;
-using StasDiplom.Enum;
-using StasDiplom.Services;
-using StasDiplom.Services.Interfaces;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Comment;
+using TaskService.Enum;
 using TaskService.Services.Interfaces;
 using Task = System.Threading.Tasks.Task;
-using DomainTask = StasDiplom.Domain.Task;
+using DomainTask = TaskService.Domain.Task;
 
 namespace TaskService.Services;
 

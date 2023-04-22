@@ -1,8 +1,8 @@
-﻿using StasDiplom.Domain;
-using StasDiplom.Dto.Calendar;
+﻿using TaskService.Domain;
+using TaskService.Dto.Calendar;
 using Task = System.Threading.Tasks.Task;
 
-namespace StasDiplom.Services.Interfaces;
+namespace TaskService.Services.Interfaces;
 
 public interface ICalendarService
 {

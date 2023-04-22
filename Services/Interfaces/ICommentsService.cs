@@ -1,4 +1,4 @@
-﻿using StasDiplom.Dto.Comment;
+﻿using TaskService.Dto.Comment;
 
 namespace TaskService.Services.Interfaces;
 

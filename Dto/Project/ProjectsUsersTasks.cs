@@ -1,6 +1,6 @@
-﻿using StasDiplom.Dto.Task;
+﻿using TaskService.Dto.Task;
 
-namespace StasDiplom.Dto.Project;
+namespace TaskService.Dto.Project;
 
 public class ProjectsUsersTasks
 {

@@ -1,15 +1,14 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Users.Login;
-using StasDiplom.Dto.Users.Register;
-using StasDiplom.Services.Interfaces;
-using StasDiplom.Utility;
-using Task = System.Threading.Tasks.Task;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Users.Login;
+using TaskService.Dto.Users.Register;
+using TaskService.Services.Interfaces;
+using TaskService.Utility;
 
-namespace StasDiplom.Services;
+namespace TaskService.Services;
 
 public class AuthenticationService : IAuthenticationService
 {

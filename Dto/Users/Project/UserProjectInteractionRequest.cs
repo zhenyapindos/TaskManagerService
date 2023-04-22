@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Users.Project;
+﻿namespace TaskService.Dto.Users.Project;
 
 public class UserProjectInteractionRequest
 {

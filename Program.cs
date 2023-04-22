@@ -5,29 +5,27 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Calendar;
-using StasDiplom.Dto.Comment;
-using StasDiplom.Dto.Event;
-using StasDiplom.Dto.Notification;
-using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Project.Requests;
-using StasDiplom.Dto.Project.Responses;
-using StasDiplom.Dto.Task;
-using StasDiplom.Dto.Users;
-using StasDiplom.Services;
-using StasDiplom.Services.Interfaces;
+using TaskService.Context;
+using TaskService.Domain;
 using TaskService.Dto;
+using TaskService.Dto.Calendar;
+using TaskService.Dto.Comment;
+using TaskService.Dto.Event;
+using TaskService.Dto.Notification;
+using TaskService.Dto.Project;
+using TaskService.Dto.Project.Requests;
+using TaskService.Dto.Project.Responses;
+using TaskService.Dto.Task;
+using TaskService.Dto.Users;
 using TaskService.Services;
 using TaskService.Services.Interfaces;
-using Task = StasDiplom.Domain.Task;
+using Task = TaskService.Domain.Task;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<ProjectManagerContext>(
-    options => options.UseSqlServer(configuration.GetConnectionString("MsSqlServerExpress")));
+    options => options.UseSqlServer(configuration.GetConnectionString("Azure")));
 
 builder.Services.AddAutoMapper(config =>
 {
@@ -124,6 +122,7 @@ builder.Services.AddAutoMapper(config =>
                 src => src.EventUsers.Select(x => x.User)));
 
     config.CreateMap<UpdateEventRequest, Event>(MemberList.Source);
+    config.CreateMap<Event, ShortEventInfo>(MemberList.Destination);
 });
 
 builder.Services.AddIdentity<User, IdentityRole>(o =>
@@ -201,9 +200,21 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
-builder.Services.AddScoped<ITaskService, StasDiplom.Services.TaskService>();
+builder.Services.AddScoped<ITaskService, TaskService.Services.TaskService>();
 builder.Services.AddScoped<ICommentsService, CommentsService>();    
-builder.Services.AddSingleton<INotificationDictionaryService, NotificationDictionaryService>();
+builder.Services.AddSingleton<INotificationDictionaryService, NotificationDictionaryService>(sp =>
+{
+    using var scope = sp.CreateScope();
+    var scopedServices = scope.ServiceProvider;
+    var context = scopedServices.GetRequiredService<ProjectManagerContext>();
+    var notificationsByUser = context.Notifications
+        .Include(x => x.User)
+        .Where(x => x.IsRead == false)
+        .GroupBy(x => x.User.Id)
+        .ToDictionary(g => g.Key, g => g.ToList());
+
+    return new NotificationDictionaryService(notificationsByUser);
+});
 
 var app = builder.Build();
 

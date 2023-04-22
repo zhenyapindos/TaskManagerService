@@ -1,5 +1,5 @@
 ﻿namespace TaskService.Dto;
-using Task = StasDiplom.Domain.Task;
+using Task = Domain.Task;
 public class TaskShortInfoWithSubTasks
 {
     public int Id { get; set; }

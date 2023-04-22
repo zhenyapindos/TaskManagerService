@@ -1,16 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto;
-using StasDiplom.Dto.Event;
-using StasDiplom.Dto.Users.Event;
-using StasDiplom.Enum;
-using StasDiplom.Services.Interfaces;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Event;
+using TaskService.Dto.Users.Event;
 using TaskService.Enum;
+using TaskService.Services.Interfaces;
 
-namespace StasDiplom.Services;
+namespace TaskService.Services;
 
 public class EventService : IEventService
 {

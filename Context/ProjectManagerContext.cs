@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using StasDiplom.Domain;
-using StasDiplom.Extensions;
-using Task = StasDiplom.Domain.Task;
+using TaskService.Domain;
+using TaskService.Extensions;
+using Task = TaskService.Domain.Task;
 
-namespace StasDiplom.Context;
+namespace TaskService.Context;
 
 public class ProjectManagerContext : IdentityDbContext<IdentityUser>
 {
@@ -39,10 +39,12 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
             .UserToTask()
             .UserToProject()
             .ProjectToCalendar()
-            //.TaskToEvent()
             .CommentToNotification()
             .EventToEventUsers();
-        //.EventToTask();
+
+        /*modelBuilder.Entity<Comment>()
+            .Property(x => x.Text)
+            .HasColumnType("ntext");*/
     }
 
     

@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Utility;
+﻿namespace TaskService.Utility;
 
 public class MyClaims
 {

@@ -1,10 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Event;
-using TaskService.Enum;
-using Task = StasDiplom.Domain.Task;
+using TaskService.Domain;
+using Task = TaskService.Domain.Task;
 
-namespace StasDiplom.Extensions;
+namespace TaskService.Extensions;
 
 public static class ModelBuilderExtension
 {

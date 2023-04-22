@@ -1,6 +1,6 @@
-﻿using StasDiplom.Enum;
+﻿using TaskService.Enum;
 
-namespace StasDiplom.Dto.Project.Responses;
+namespace TaskService.Dto.Project.Responses;
 
 public class UserProjectResponse
 {

@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Project;
+﻿namespace TaskService.Dto.Project;
 
 public class ShortProjectInfo
 {

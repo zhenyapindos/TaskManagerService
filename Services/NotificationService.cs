@@ -1,16 +1,16 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto;
-using StasDiplom.Dto.Event;
-using StasDiplom.Dto.Notification;
-using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Task;
-using StasDiplom.Services.Interfaces;
-using Task = StasDiplom.Domain.Task;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Event;
+using TaskService.Dto.Notification;
+using TaskService.Dto.Project;
+using TaskService.Dto.Task;
+using TaskService.Services.Interfaces;
+using Task = TaskService.Domain.Task;
 
-namespace StasDiplom.Services;
+namespace TaskService.Services;
 
 public class NotificationService : INotificationService
 {
@@ -18,34 +18,33 @@ public class NotificationService : INotificationService
     private readonly IMapper _mapper;
     private readonly INotificationDictionaryService _dictionary;
 
-    public NotificationService(ProjectManagerContext context, IMapper mapper, INotificationDictionaryService dictionary)
+    public NotificationService(ProjectManagerContext context, IMapper mapper, INotificationDictionaryService dictionary, UserManager<User> userManager)
     {
         _context = context;
         _mapper = mapper;
         _dictionary = dictionary;
     }
-
     public async Task<Notification> ProjectInvitation(Project project, User user)
     {
         var newNotification = Notification.CreateProjectNotification(user, project);
-        
+
         _context.Add(newNotification);
         await _context.SaveChangesAsync();
 
         _dictionary.AddToDictionary(user.Id, newNotification);
-        
+
         return newNotification;
     }
 
     public async Task<Notification> ProjectKick(Project project, User user)
     {
         var newNotification = Notification.CreateKickNotification(user, project);
-        
+
         _context.Add(newNotification);
         await _context.SaveChangesAsync();
 
         _dictionary.AddToDictionary(user.Id, newNotification);
-        
+
         return newNotification;
     }
 
@@ -53,9 +52,9 @@ public class NotificationService : INotificationService
     {
         var newNotification = Notification.CreateTaskNotification(user, task);
         _context.Add(newNotification);
-        
+
         await _context.SaveChangesAsync();
-        
+
         _dictionary.AddToDictionary(user.Id, newNotification);
 
         return newNotification;
@@ -67,7 +66,7 @@ public class NotificationService : INotificationService
 
         _context.Add(newNotification);
         await _context.SaveChangesAsync();
-        
+
         _dictionary.AddToDictionary(user.Id, newNotification);
 
         return newNotification;
@@ -80,6 +79,7 @@ public class NotificationService : INotificationService
 
     public async Task<List<NotificationInfo>> GetUnreadNotifications(User user)
     {
+        
         var notificationsInfo = new List<NotificationInfo>();
 
         foreach (var notification in _dictionary.GetAllNotifications(user.Id))
@@ -88,14 +88,34 @@ public class NotificationService : INotificationService
             newNotificationInfo.ShortTaskInfo = _mapper.Map<ShortTaskInfo>(notification.Task);
             newNotificationInfo.ShortProjectInfo = _mapper.Map<ShortProjectInfo>(notification.Project);
             newNotificationInfo.ShortEventInfo = _mapper.Map<ShortEventInfo>(notification.Event);
-            newNotificationInfo.Title = notification.Task == null ? notification.Project.Title : notification.Task.Title;
+            //newNotificationInfo.Title = notification.Task == null ? notification.Project.Title : notification.Task.Title;
 
             notificationsInfo.Add(newNotificationInfo);
         }
 
         return notificationsInfo;
     }
-    
+    public async Task<List<NotificationInfo>> GetAllNotificationsInfo(User user)
+    {
+        user.Notifications = _context.Notifications
+            .Include(x => x.Project)
+            .Include(x => x.Task)
+            .Include(x => x.Event)
+            .Where(x => x.User == user).ToList();
+
+        var notificationInfos = new List<NotificationInfo>();
+        foreach (var notification in user.Notifications)
+        {
+            var notificationInfo = _mapper.Map<NotificationInfo>(notification);
+            notificationInfo.ShortTaskInfo = _mapper.Map<ShortTaskInfo>(notification.Task);
+            notificationInfo.ShortProjectInfo = _mapper.Map<ShortProjectInfo>(notification.Project);
+            notificationInfo.ShortEventInfo = _mapper.Map<ShortEventInfo>(notification.Event);
+
+            notificationInfos.Add(notificationInfo);
+        }
+
+        return notificationInfos;
+    }
     public void MarkAsRead(User user, List<int> ids)
     {
         var notifications = _context.Notifications.Where(x => ids.Contains(x.Id)).ToList();
@@ -110,38 +130,17 @@ public class NotificationService : INotificationService
 
         _dictionary.RemoveFromDictionary(user.Id, ids);
     }
-
-    public async Task<List<NotificationInfo>> GetAllNotificationsInfo(User user)
-    {
-        user.Notifications = _context.Notifications
-            .Include(x=> x.Project)
-            .Include(x=>x.Task)
-            .Include(x=> x.Event)
-            .Where(x => x.User == user).ToList();
-
-        var notificationInfos = new List<NotificationInfo>();
-        foreach (var notification in user.Notifications)
-        {
-            var notificationInfo = _mapper.Map<NotificationInfo>(notification);
-            notificationInfo.ShortTaskInfo = _mapper.Map<ShortTaskInfo>(notification.Task);
-            notificationInfo.ShortProjectInfo = _mapper.Map<ShortProjectInfo>(notification.Project);
-            notificationInfo.ShortEventInfo = _mapper.Map<ShortEventInfo>(notification.Event);
-            
-            notificationInfos.Add(notificationInfo);
-        }
-
-        return notificationInfos;
-    }
-
     public async Task<Notification> EventCreated(User user, Event eventId)
     {
         var newNotification = Notification.CreateEventNotification(user, eventId);
 
         _context.Add(newNotification);
         await _context.SaveChangesAsync();
-        
+
         _dictionary.AddToDictionary(user.Id, newNotification);
 
         return newNotification;
     }
+
+    
 }

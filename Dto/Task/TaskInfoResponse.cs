@@ -1,8 +1,8 @@
-﻿using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Users;
-using TaskStatus = StasDiplom.Enum.TaskStatus;
+﻿using TaskService.Dto.Project;
+using TaskService.Dto.Users;
+using TaskStatus = TaskService.Enum.TaskStatus;
 
-namespace StasDiplom.Dto.Task;
+namespace TaskService.Dto.Task;
 
 public class TaskInfoResponse
 {

@@ -1,7 +1,6 @@
-﻿using System.Collections;
-using TaskStatus = StasDiplom.Enum.TaskStatus;
+﻿using TaskStatus = TaskService.Enum.TaskStatus;
 
-namespace StasDiplom.Domain;
+namespace TaskService.Domain;
 
 public record Task
 {

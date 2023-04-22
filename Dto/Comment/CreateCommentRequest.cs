@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Comment;
+﻿namespace TaskService.Dto.Comment;
 
 public class CreateCommentRequest
 {

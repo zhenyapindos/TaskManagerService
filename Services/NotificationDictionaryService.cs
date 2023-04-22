@@ -1,17 +1,16 @@
-﻿using StasDiplom.Domain;
-using StasDiplom.Services.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Services.Interfaces;
 
-namespace StasDiplom.Services;
+namespace TaskService.Services;
 
 class NotificationDictionaryService : INotificationDictionaryService
 {
     private readonly Dictionary<string, List<Notification>> _dictionary;
-    private readonly ILogger<NotificationDictionaryService> _logger;
-
-    public NotificationDictionaryService(ILogger<NotificationDictionaryService> logger)
+    public NotificationDictionaryService(Dictionary<string, List<Notification>> dictionary)
     {
-        _logger = logger;
-        _dictionary = new Dictionary<string, List<Notification>>();
+        _dictionary = dictionary;
     }
 
     public void AddToDictionary(string userId, Notification notification)
@@ -22,7 +21,10 @@ class NotificationDictionaryService : INotificationDictionaryService
         }
         else
         {
-            _dictionary[userId].Add(notification);
+            if (!_dictionary[userId].Contains(notification))
+            {
+                _dictionary[userId].Add(notification);
+            }
         }
         
         //_logger.LogInformation(_dictionary[userId].First().Comment?.Text);
@@ -54,5 +56,18 @@ class NotificationDictionaryService : INotificationDictionaryService
     public List<Notification> GetAllNotifications(string userId)
     {
        return !_dictionary.ContainsKey(userId) ? new List<Notification>() : _dictionary[userId];
+    }
+
+    public bool IsContain(string userId, Notification notification)
+    {
+        if (_dictionary.ContainsKey(userId))
+        {
+            if (_dictionary[userId].Contains(notification))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

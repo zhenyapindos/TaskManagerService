@@ -1,6 +1,6 @@
-﻿using StasDiplom.Dto.Event;
+﻿using TaskService.Dto.Event;
 
-namespace StasDiplom.Dto.Calendar;
+namespace TaskService.Dto.Calendar;
 
 public record CalendarInfo
 {

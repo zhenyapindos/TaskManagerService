@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Project.Requests;
+﻿namespace TaskService.Dto.Project.Requests;
 
 public class CreateProjectRequest
 {

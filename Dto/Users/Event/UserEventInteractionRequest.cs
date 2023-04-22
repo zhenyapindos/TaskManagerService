@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Users.Event;
+﻿namespace TaskService.Dto.Users.Event;
 
 public class UserEventInteractionRequest
 {

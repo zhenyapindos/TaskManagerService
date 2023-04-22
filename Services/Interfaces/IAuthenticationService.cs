@@ -1,8 +1,8 @@
-﻿using StasDiplom.Domain;
-using StasDiplom.Dto.Users.Login;
-using StasDiplom.Dto.Users.Register;
+﻿using TaskService.Domain;
+using TaskService.Dto.Users.Login;
+using TaskService.Dto.Users.Register;
 
-namespace StasDiplom.Services.Interfaces;
+namespace TaskService.Services.Interfaces;
 
 public interface IAuthenticationService
 {

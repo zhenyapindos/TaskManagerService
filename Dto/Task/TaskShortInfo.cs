@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Task;
+﻿namespace TaskService.Dto.Task;
 
 public class TaskShortInfo
 {

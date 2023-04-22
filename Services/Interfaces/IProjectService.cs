@@ -1,12 +1,12 @@
-﻿using StasDiplom.Domain;
-using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Project.Requests;
-using StasDiplom.Dto.Project.Responses;
-using StasDiplom.Dto.Users;
-using StasDiplom.Dto.Users.Project;
+﻿using TaskService.Domain;
+using TaskService.Dto.Project;
+using TaskService.Dto.Project.Requests;
+using TaskService.Dto.Project.Responses;
+using TaskService.Dto.Users;
+using TaskService.Dto.Users.Project;
 using Task = System.Threading.Tasks.Task;
 
-namespace StasDiplom.Services.Interfaces;
+namespace TaskService.Services.Interfaces;
 
 public interface IProjectService
 {

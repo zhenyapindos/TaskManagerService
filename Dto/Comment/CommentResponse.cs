@@ -1,7 +1,6 @@
-﻿using StasDiplom.Dto.Project;
-using StasDiplom.Dto.Users;
+﻿using TaskService.Dto.Users;
 
-namespace StasDiplom.Dto.Comment;
+namespace TaskService.Dto.Comment;
 
 public record CommentResponse
 {

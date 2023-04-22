@@ -1,23 +1,14 @@
-﻿using System.Runtime.InteropServices;
-using System.Text.Json.Serialization;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using StasDiplom.Context;
-using StasDiplom.Domain;
-using StasDiplom.Dto.Comment;
-using StasDiplom.Dto.Project;
-using StasDiplom.Enum;
-using StasDiplom.Services;
-using StasDiplom.Services.Interfaces;
-using StasDiplom.Utility;
-using TaskService.Services;
+using TaskService.Context;
+using TaskService.Domain;
+using TaskService.Dto.Comment;
 using TaskService.Services.Interfaces;
-using Task = StasDiplom.Domain.Task;
+using TaskService.Utility;
 
-namespace StasDiplom.Controllers;
+namespace TaskService.Controllers;
 
 [ApiController]
 [Route("api/comments/")]

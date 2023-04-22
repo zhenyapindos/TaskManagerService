@@ -1,8 +1,8 @@
-﻿using StasDiplom.Dto.Event;
-using StasDiplom.Dto.Users.Event;
+﻿using TaskService.Dto.Event;
+using TaskService.Dto.Users.Event;
 using Task = System.Threading.Tasks.Task;
 
-namespace StasDiplom.Services.Interfaces;
+namespace TaskService.Services.Interfaces;
 
 public interface IEventService
 {

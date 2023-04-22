@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Domain;
+﻿namespace TaskService.Domain;
 
 public record Comment
 {

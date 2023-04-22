@@ -1,4 +1,4 @@
-﻿namespace StasDiplom.Dto.Users.Login;
+﻿namespace TaskService.Dto.Users.Login;
 
 public class LoginResponse
 {
