@@ -88,7 +88,23 @@ public class NotificationService : INotificationService
             newNotificationInfo.ShortTaskInfo = _mapper.Map<ShortTaskInfo>(notification.Task);
             newNotificationInfo.ShortProjectInfo = _mapper.Map<ShortProjectInfo>(notification.Project);
             newNotificationInfo.ShortEventInfo = _mapper.Map<ShortEventInfo>(notification.Event);
-            //newNotificationInfo.Title = notification.Task == null ? notification.Project.Title : notification.Task.Title;
+            
+            if (notification.Task != null)
+            {
+                newNotificationInfo.Title = notification.Task.Title + "'s notification";
+            }
+            else if (notification.Project != null)
+            {
+                newNotificationInfo.Title = notification.Project.Title + "'s notification";
+            }
+            else if (notification.Event != null)
+            {
+                newNotificationInfo.Title = notification.Event.Title + "'s notification";
+            }
+            else
+            {
+                newNotificationInfo.Title = "Comment mention notification";
+            }
 
             notificationsInfo.Add(newNotificationInfo);
         }

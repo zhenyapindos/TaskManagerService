@@ -141,14 +141,7 @@ public class CommentsService : ICommentsService
         {
             throw new ArgumentNullException();
         }
-
-        var resultUser = task.TaskUsers.FirstOrDefault(x => x.UserId == userId);
-
-        if (resultUser == null)
-        {
-            throw new ArgumentNullException();
-        }
-
+        
         var response = CreateCommentList(
             task.Comments.ToList(),
             count,

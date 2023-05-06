@@ -1,4 +1,5 @@
-﻿using TaskService.Enum;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using TaskService.Enum;
 
 namespace TaskService.Domain;
 
@@ -13,6 +14,7 @@ public record Notification
     public bool IsRead { get; set; }
     public User User { get; set; }
     public Task? Task { get; set; }
+    [ForeignKey("ProjectId")]
     public Project? Project { get; set; }
     public Comment? Comment { get; set; }
     public Event? Event { get; set; }

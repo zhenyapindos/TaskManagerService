@@ -14,4 +14,5 @@ public interface ITaskService
     public Task<(DomainTask task, User user)> AssignUser(UserTaskInterractionRequest request, string userId);
     public Task UnassignUser(UserTaskInterractionRequest request, string userId);
     public Task MarkTaskAsDone(int taskId, string userId);
+    public bool IsTaskAsEvent(int taskId, string userId);
 }

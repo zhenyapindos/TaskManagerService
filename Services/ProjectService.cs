@@ -90,17 +90,49 @@ public class ProjectService : IProjectService
                 TaskList = new List<TaskShortInfo>()
             };
 
-            foreach (var task in project.Tasks)
-            {
-                var currentTaskUser = task.TaskUsers.FirstOrDefault(x => x.UserId == id);
+            var taskUser = _context.TaskUsers.FirstOrDefault(x => x.UserId == id);
 
-                if (!task.TaskUsers.Contains(currentTaskUser!)) continue;
-                
+            var tasks = _context.Tasks.Where(x => x.Project == project).ToList();
+            
+            foreach (var task in tasks)
+            {
+                if (task.TaskUsers.FirstOrDefault(x=> x.UserId == taskUser.UserId) == null)
+                {
+                    continue;
+                }
+                    
                 var mappedTask = _mapper.Map<TaskShortInfo>(task);
 
-                if (mappedTask.Deadline is null)
+                if (task.StartDate != null)
                 {
-                    mappedTask.TaskStatus = (TaskStatus) 3;
+                    mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+                }
+
+                if (task.StartDate == null && task.TaskStatus != Enum.TaskStatus.Done)
+                {
+                    mappedTask.Deadline = null;
+                    mappedTask.TaskStatus = (TaskStatus) Enum.TaskStatus.Created;
+                }
+                else if (task.TaskStatus != Enum.TaskStatus.Done)
+                {
+                    if (task.StartDate > DateTime.UtcNow)
+                    {
+                        mappedTask.TaskStatus = (TaskStatus) 2;
+                    }
+                    else if (DateTime.UtcNow < mappedTask.Deadline && DateTime.UtcNow >= task.StartDate)
+                    {
+                        mappedTask.TaskStatus = (TaskStatus) 1;
+                    }
+                    else if (mappedTask.Deadline < DateTime.UtcNow)
+                    {
+                        mappedTask.TaskStatus = 0;
+                    }
+                }
+                else
+                {
+                    mappedTask.TaskStatus = (TaskStatus) Enum.TaskStatus.Done;
+                    //mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);   
+                    mappedTask.Deadline = null;
                 }
 
                 responseElement.TaskList.Add(mappedTask);
@@ -296,7 +328,15 @@ public class ProjectService : IProjectService
             throw new ArgumentException("User has no permissions");
         }
 
+        var eventsList = _context.Events.Where(x => x.Calendar.ProjectId == project.Id);
+        var notificationsList = _context.Notifications.Where(x => x.Project!.Id == project.Id);
+        var commentsList = _context.Comments.Where(x => x.Project.Id == project.Id);
+        
+        _context.RemoveRange(commentsList);
+        _context.RemoveRange(eventsList);
+        _context.RemoveRange(notificationsList);
         _context.Remove(project);
+        
         await _context.SaveChangesAsync();
     }
 
@@ -332,9 +372,36 @@ public class ProjectService : IProjectService
         {
             var mappedTask = _mapper.Map<TaskShortInfoWithSubTasks>(task);
             
-            if (mappedTask.Deadline == null)
+            if (task.StartDate != null)
             {
-                mappedTask.TaskStatus = (TaskStatus) 3;
+                mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+            }
+
+            if (task.StartDate == null && task.TaskStatus != Enum.TaskStatus.Done)
+            {   
+                mappedTask.Deadline = null;
+                mappedTask.TaskStatus = (TaskStatus) Enum.TaskStatus.Created;
+            }
+            else if (task.TaskStatus != Enum.TaskStatus.Done)
+            {
+                if (task.StartDate > DateTime.UtcNow)
+                {
+                    mappedTask.TaskStatus = (TaskStatus) 2;
+                }
+                else if (DateTime.UtcNow < mappedTask.Deadline && DateTime.UtcNow >= task.StartDate)
+                {
+                    mappedTask.TaskStatus = (TaskStatus) 1;
+                }
+                else if (mappedTask.Deadline < DateTime.UtcNow)
+                {
+                    mappedTask.TaskStatus = 0;
+                }
+            }
+            else
+            {
+                mappedTask.TaskStatus = (TaskStatus) Enum.TaskStatus.Done;
+                //mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+                mappedTask.Deadline = null;
             }
 
             var parentTask = _context.Tasks.FirstOrDefault(x => x.Id == task.ParentTaskId);

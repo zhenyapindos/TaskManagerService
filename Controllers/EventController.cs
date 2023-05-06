@@ -95,7 +95,7 @@ public class EventController : Controller
         var userId = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
         try
         {
-            _eventService.DeleteEvent(id, userId);
+            await _eventService.DeleteEvent(id, userId);
         }
         catch (ArgumentException)
         {

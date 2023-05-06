@@ -36,6 +36,21 @@ public static class ModelBuilderExtension
 
         return modelBuilder;
     }
+    public static ModelBuilder EventToTask(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Event>()
+            .HasOne(t => t.Task)
+            .WithMany(n => n.Events)
+            .HasForeignKey(x=> x.TaskId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Task>()
+            .HasMany(t => t.Events)
+            .WithOne(t => t.Task)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        return modelBuilder;
+    }
 
     public static ModelBuilder CommentToProject(this ModelBuilder modelBuilder)
     {
@@ -75,7 +90,7 @@ public static class ModelBuilderExtension
             .HasOne(t => t.Project)
             .WithMany(t => t.Notifications)
             .HasForeignKey(t => t.ProjectId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Project>()
             .HasMany(n => n.Notifications)
@@ -96,7 +111,7 @@ public static class ModelBuilderExtension
         modelBuilder.Entity<Task>()
             .HasMany(n => n.Notifications)
             .WithOne(n => n.Task)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.NoAction);
 
         return modelBuilder;
     }

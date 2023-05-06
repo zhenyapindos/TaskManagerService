@@ -18,4 +18,5 @@ public record Event
     public ICollection<EventUser> EventUsers { get; set; }
     public Calendar Calendar { get; set; }
     public Task? Task { get; set; }
+    public int? TaskId { get; set; }
 }

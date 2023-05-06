@@ -178,7 +178,7 @@ public class TaskController : Controller
 
         try
         {
-            await _taskService.AssignUser(request, id);
+            await _taskService.UnassignUser(request, id);
         }
         catch (InvalidOperationException e)
         {
@@ -220,5 +220,14 @@ public class TaskController : Controller
         }
 
         return Ok();
+    }
+
+    [Authorize]
+    [HttpGet("/api/task/{taskId}/isEvent")]
+    public async Task<IActionResult> IsTaskAsEvent([FromRoute] int taskId)
+    {
+        var id = User.Claims.First(x => x.Type == MyClaims.Id).Value ?? throw new ArgumentException();
+
+        return Ok(_taskService.IsTaskAsEvent(taskId, id));
     }
 }

@@ -7,6 +7,7 @@ using TaskService.Dto.Event;
 using TaskService.Dto.Users.Event;
 using TaskService.Enum;
 using TaskService.Services.Interfaces;
+using Task = System.Threading.Tasks.Task;
 
 namespace TaskService.Services;
 
@@ -169,8 +170,6 @@ public class EventService : IEventService
         {
             throw new InvalidOperationException();
         }
-        
-        oldEvent.Description = request.Description;
 
         if (request.Title != null)
         {
@@ -181,7 +180,7 @@ public class EventService : IEventService
         {
             oldEvent.Description = request.Description;
         }
-        
+
         if (request.MeetingLink != null)
         {
             oldEvent.MeetingLink = request.MeetingLink;
@@ -189,7 +188,6 @@ public class EventService : IEventService
         }
         else
         {
-            oldEvent.MeetingLink = null;
             oldEvent.EventType = EventType.Other;
         }
 
@@ -197,7 +195,7 @@ public class EventService : IEventService
         await _context.SaveChangesAsync();
 
         var eventUsers = _context.EventUsers
-            .Where(x => x.EventId == request.Id)
+            .Where(x => x.EventId == oldEvent.Id)
             .Select(x=>x.User.UserName).ToList();
 
         var info = _mapper.Map<EventInfo>(oldEvent) with
@@ -209,11 +207,14 @@ public class EventService : IEventService
         return info;
     }
 
-    public void DeleteEvent(int eventId, string id)
+    public async Task DeleteEvent(int eventId, string id)
     {
-        var eventForDeleting = _context.Events.Include(x => x.EventUsers)
+        var eventForDeleting = _context.Events
+            .Include(x => x.EventUsers)
             .FirstOrDefault(x => x.Id == eventId);
 
+        var notifications = _context.Notifications.Where(x => x.EventId == eventId);
+        
         if (eventForDeleting == null)
         {
             throw new ArgumentException();
@@ -225,11 +226,11 @@ public class EventService : IEventService
         {
             throw new InvalidOperationException();
         }
-
+        
+        _context.RemoveRange(notifications);
         _context.Events.Remove(eventForDeleting);
-        _context.SaveChangesAsync();
 
-        _logger.LogInformation("Delete succsesfulliation");
+        await _context.SaveChangesAsync();
     }
 
     public async System.Threading.Tasks.Task AssignUser(UserEventInteractionRequest request, string id)

@@ -21,12 +21,14 @@ public class TaskService : ITaskService
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
     private readonly IEventService _eventService;
-    public TaskService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, IEventService eventService)
+    private readonly INotificationService _notificationService;
+    public TaskService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, IEventService eventService, INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
         _eventService = eventService;
+        _notificationService = notificationService;
     }
 
     public async Task<TaskShortInfo> CreateTask(CreateTaskRequest request, string userId)
@@ -124,6 +126,7 @@ public class TaskService : ITaskService
                     User = user
                 };
 
+                await _notificationService.TaskAssignUser(newTask, user);
                 taskUsers.Add(taskUser);
             }
         }
@@ -166,30 +169,30 @@ public class TaskService : ITaskService
             response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
         }
 
-        if (task.StartDate == null)
+        if (task.StartDate == null && task.TaskStatus != Enum.TaskStatus.Done)
         {
             response.Deadline = null;
-            response.Status = TaskStatus.Created;
+            response.Status = (TaskStatus) Enum.TaskStatus.Created;
         }
-        else if (task.TaskStatus != TaskStatus.Done)
+        else if (task.TaskStatus != Enum.TaskStatus.Done)
         {
             if (task.StartDate > DateTime.UtcNow)
             {
-                response.Status = TaskStatus.Planned;
+                response.Status = (TaskStatus) 2;
             }
             else if (DateTime.UtcNow < response.Deadline && DateTime.UtcNow >= task.StartDate)
             {
-                response.Status = TaskStatus.InProgress;
+                response.Status = (TaskStatus) 1;
             }
             else if (response.Deadline < DateTime.UtcNow)
             {
-                response.Status = TaskStatus.Overdue;
+                response.Status = 0;
             }
         }
         else
         {
-            response.Status = TaskStatus.Done;
-            response.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+            response.Status = (TaskStatus) Enum.TaskStatus.Done;
+            //mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);   response.Deadline = null;
         }
 
         if (task.PreviousTaskId != null)
@@ -228,8 +231,6 @@ public class TaskService : ITaskService
             throw new ArgumentException("Task is not found");
         }
 
-        var projectId = task.ProjectId;
-
         var user = task.Project.ProjectUsers.FirstOrDefault(x => x.UserId == id);
 
         if (user == null)
@@ -242,41 +243,61 @@ public class TaskService : ITaskService
             throw new InvalidOperationException("User has no permissions");
         }
 
-        var newTask = _mapper.Map<DomainTask>(request) with
+        if (request.Title != null)
         {
-            Id = taskId,
-            ProjectId = projectId
-        };
-
-        if (newTask is {DurationHours: not null, StartDate: not null})
+            task.Title = request.Title;
+        }
+        
+        if (request.Description != null)
         {
-            newTask.Deadline = newTask.StartDate.Value.AddHours((double) newTask.DurationHours);
+            task.Description = request.Description;
+        }
+        
+        if (request.StartDate != null)
+        {
+            task.StartDate = request.StartDate;
+        }
+        
+        if (request.DurationHours != null)
+        {
+            task.DurationHours = request.DurationHours;
         }
 
-        if (newTask.TaskStatus != TaskStatus.Done)
+        if (task.StartDate != null)
         {
-            if (newTask.StartDate > DateTime.UtcNow)
+            task.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+        }
+
+        if (task.StartDate == null && task.TaskStatus != Enum.TaskStatus.Done)
+        {
+            task.Deadline = null;
+            task.TaskStatus = TaskStatus.Created;
+        }
+        else if (task.TaskStatus != TaskStatus.Done)
+        {
+            if (task.StartDate > DateTime.UtcNow)
             {
-                newTask.TaskStatus = TaskStatus.Planned;
+                task.TaskStatus = (TaskStatus) 2;
             }
-            else if (DateTime.UtcNow < newTask.Deadline && DateTime.UtcNow >= task.StartDate)
+            else if (DateTime.UtcNow < task.Deadline && DateTime.UtcNow >= task.StartDate)
             {
-                newTask.TaskStatus = TaskStatus.InProgress;
+                task.TaskStatus = (TaskStatus) 1;
             }
-            else if (newTask.Deadline < DateTime.UtcNow)
+            else if (task.Deadline < DateTime.UtcNow)
             {
-                newTask.TaskStatus = TaskStatus.Overdue;
+                task.TaskStatus = 0;
             }
         }
         else
         {
-            newTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
+            task.TaskStatus = TaskStatus.Done;
+            task.Deadline = null;
         }
-
-        _context.Tasks.Update(newTask);
+        
+        _context.Tasks.Update(task);
         await _context.SaveChangesAsync();
 
-        var response = _mapper.Map<TaskInfoResponse>(newTask);
+        var response = _mapper.Map<TaskInfoResponse>(task);
         response.AssignedUsers = task.TaskUsers.Join(_userManager.Users,
                 pu => pu.UserId, u => u.Id, (projectUser, user) => _mapper.Map<UserShortInfo>((user, projectUser)))
             .ToList();
@@ -323,6 +344,7 @@ public class TaskService : ITaskService
             .Include(x => x.Events);
         DeleteChildTasks(childTasks);
 
+        _context.RemoveRange(_context.Notifications.Where(x=> x.Task == task));
         _context.RemoveRange(_context.Events.Where(x=> x.EventType == EventType.TaskEvent && x.Task == task));
         _context.Remove(task);
 
@@ -335,14 +357,16 @@ public class TaskService : ITaskService
         {
             var childTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
             var eventList = _context.Events.Where(x => x.EventType == EventType.TaskEvent && x.Task == task);
-
+            var notificationList = _context.Notifications.Where(x => x.Task == task);
+            
             foreach (var events in eventList)
             {
                 _context.Events.Remove(events);
             }
             
             DeleteChildTasks(childTasks);
-            
+
+            _context.RemoveRange(notificationList);
             _context.RemoveRange(eventList);
             task.PreviousTaskId = null;
         }
@@ -354,11 +378,15 @@ public class TaskService : ITaskService
         {
             var previousTasks = _context.Tasks.Where(x => x.PreviousTaskId! == task.Id);
             var eventList = _context.Events.Where(x => x.EventType == EventType.TaskEvent && x.Task == task);
+            var notificationList = _context.Notifications.Where(x => x.Task == task);
+            
             foreach (var events in eventList)
             {
                 _context.Events.Remove(events);
             }
 
+            _context.RemoveRange(notificationList);
+            
             DeletePreviousTasks(previousTasks);
 
             var currentChildTasks = _context.Tasks.Where(x => x.ParentTaskId! == task.Id);
@@ -417,6 +445,7 @@ public class TaskService : ITaskService
             .Include(x => x.Project)
             .ThenInclude(x => x.ProjectUsers)
             .Include(x => x.TaskUsers)
+            .ThenInclude(x=> x.User)
             .FirstOrDefault(x => x.Id == request.TaskId);
 
         if (task == null)
@@ -438,11 +467,11 @@ public class TaskService : ITaskService
             throw new InvalidOperationException("User is not found");
         }
 
-        var newTaskUser = task.TaskUsers.FirstOrDefault(x => x.UserId == userExists.Id);
-
-        if (newTaskUser != null)
+        var taskUser = _context.TaskUsers.FirstOrDefault(x => x.User == userExists);
+        
+        if (taskUser != null)
         {
-            _context.TaskUsers.Remove(newTaskUser);
+            _context.TaskUsers.Remove(taskUser);
         }
 
         await _context.SaveChangesAsync();
@@ -470,5 +499,12 @@ public class TaskService : ITaskService
 
         _context.Tasks.Update(task);
         await _context.SaveChangesAsync();
+    }
+
+    public bool IsTaskAsEvent(int taskId, string userId)
+    {
+        var task = _context.Tasks.FirstOrDefault(x => x.Id == taskId);
+
+        return _context.Events.FirstOrDefault(x => x.Task == task) != null;
     }
 }

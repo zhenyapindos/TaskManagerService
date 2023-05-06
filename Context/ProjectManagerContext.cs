@@ -31,7 +31,6 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
             .CommentToTask()
             .TaskToProject()
             .ProjectToNotification()
-            .TaskToNotification()
             .EventToCalendar()
             .UserToComment()
             .UserToNotification()
@@ -40,7 +39,8 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
             .UserToProject()
             .ProjectToCalendar()
             .CommentToNotification()
-            .EventToEventUsers();
+            .EventToEventUsers()
+            .EventToTask();
 
         /*modelBuilder.Entity<Comment>()
             .Property(x => x.Text)
