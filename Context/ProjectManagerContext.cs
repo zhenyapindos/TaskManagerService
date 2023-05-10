@@ -41,11 +41,5 @@ public class ProjectManagerContext : IdentityDbContext<IdentityUser>
             .CommentToNotification()
             .EventToEventUsers()
             .EventToTask();
-
-        /*modelBuilder.Entity<Comment>()
-            .Property(x => x.Text)
-            .HasColumnType("ntext");*/
     }
-
-    
 }

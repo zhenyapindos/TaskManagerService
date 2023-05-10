@@ -14,17 +14,15 @@ namespace TaskService.Services;
 public class CommentsService : ICommentsService
 {
     private readonly ProjectManagerContext _context;
-    private readonly ICalendarService _calendarService;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
 
     public CommentsService(INotificationService notificationService, ProjectManagerContext context,
-        ICalendarService calendarService, UserManager<User> userManager, IMapper mapper)
+         UserManager<User> userManager, IMapper mapper)
     {
         _notificationService = notificationService;
         _context = context;
-        _calendarService = calendarService;
         _userManager = userManager;
         _mapper = mapper;
     }

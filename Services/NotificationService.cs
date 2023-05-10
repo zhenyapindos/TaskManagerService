@@ -157,6 +157,4 @@ public class NotificationService : INotificationService
 
         return newNotification;
     }
-
-    
 }

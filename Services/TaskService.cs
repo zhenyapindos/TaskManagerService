@@ -20,14 +20,12 @@ public class TaskService : ITaskService
     private readonly ProjectManagerContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
-    private readonly IEventService _eventService;
     private readonly INotificationService _notificationService;
     public TaskService(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper, IEventService eventService, INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
         _mapper = mapper;
-        _eventService = eventService;
         _notificationService = notificationService;
     }
 
@@ -192,7 +190,6 @@ public class TaskService : ITaskService
         else
         {
             response.Status = (TaskStatus) Enum.TaskStatus.Done;
-            //mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);   response.Deadline = null;
         }
 
         if (task.PreviousTaskId != null)

@@ -15,5 +15,4 @@ public interface INotificationService
     public void MarkAsRead(User user, List<int> ids);
     public Task<List<NotificationInfo>> GetAllNotificationsInfo(User user);
     public Task<Notification> EventCreated(User user, Event eventId);
-    //public void AddToDictionary(Dictionary<User, List<Notification>> dictionary, Notification notification);
 }

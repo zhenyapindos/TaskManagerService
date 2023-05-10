@@ -16,18 +16,11 @@ namespace TaskService.Controllers;
 [Route("api/task/")]
 public class TaskController : Controller
 {
-    private readonly ProjectManagerContext _context;
-    private readonly UserManager<User> _userManager;
-    private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
     private readonly ITaskService _taskService;
 
-    public TaskController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper,
-        INotificationService service, ITaskService taskService)
+    public TaskController(INotificationService service, ITaskService taskService)
     {
-        _context = context;
-        _userManager = userManager;
-        _mapper = mapper;
         _notificationService = service;
         _taskService = taskService;
     }
@@ -59,8 +52,7 @@ public class TaskController : Controller
             return Forbid();
         }
     }
-
-
+    
     [Authorize]
     [HttpGet("/api/task/{taskId:int}")]
     [ProducesResponseType(401)]

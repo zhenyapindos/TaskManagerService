@@ -16,7 +16,6 @@ public record Task
     public int ProjectId { get; set; }
     public DateTime? Deadline { get; set; }
     public Project Project { get; set; }
-
     public ICollection<TaskUser> TaskUsers { get; set; }
     public ICollection<User> Users { get; set; }
     public ICollection<Notification> Notifications { get; set; }

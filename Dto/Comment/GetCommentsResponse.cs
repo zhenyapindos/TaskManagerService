@@ -8,5 +8,4 @@ public record GetCommentsResponse
     public int TotalPages { get; set; }
     public int ProjectId { get; set; }
     public int? TaskId { get; set; }
-    //public string[] TaggedUsernames { get; set; }
 }

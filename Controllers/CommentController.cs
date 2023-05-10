@@ -14,18 +14,9 @@ namespace TaskService.Controllers;
 [Route("api/comments/")]
 public class CommentController : Controller
 {
-    private readonly ProjectManagerContext _context;
-    private readonly UserManager<User> _userManager;
-    private readonly IMapper _mapper;
-    private readonly INotificationService _notificationService;
     private readonly ICommentsService _commentsService;
-    public CommentController(ProjectManagerContext context, UserManager<User> userManager, IMapper mapper,
-        INotificationService notificationService, ICommentsService commentsService)
+    public CommentController(ICommentsService commentsService)
     {
-        _context = context;
-        _userManager = userManager;
-        _mapper = mapper;
-        _notificationService = notificationService;
         _commentsService = commentsService;
     }
 

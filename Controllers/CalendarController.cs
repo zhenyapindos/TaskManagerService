@@ -17,14 +17,12 @@ public class CalendarController : Controller
     private readonly ProjectManagerContext _context;
     private readonly ICalendarService _calendarService;
     private readonly UserManager<User> _userManager;
-    private readonly IMapper _mapper;
 
-    public CalendarController(ICalendarService calendarService, UserManager<User> userManager, ProjectManagerContext context, IMapper mapper)
+    public CalendarController(ICalendarService calendarService, UserManager<User> userManager, ProjectManagerContext context)
     {
         _calendarService = calendarService;
         _userManager = userManager;
         _context = context;
-        _mapper = mapper;
     }
 
     [Authorize]

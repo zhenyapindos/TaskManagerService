@@ -26,8 +26,6 @@ class NotificationDictionaryService : INotificationDictionaryService
                 _dictionary[userId].Add(notification);
             }
         }
-        
-        //_logger.LogInformation(_dictionary[userId].First().Comment?.Text);
     }
 
     public void RemoveFromDictionary(string userId, List<int> ids)

@@ -12,7 +12,6 @@ public record Event
     public EventType EventType { get; set; }
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
-    //public double DurationHours { get; set; }
     public string CreatorId { get; set; }
     public ICollection<User> Users { get; set; }
     public ICollection<EventUser> EventUsers { get; set; }

@@ -17,16 +17,14 @@ public class EventService : IEventService
     private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
     private readonly INotificationService _notificationService;
-    private readonly ILogger<EventService> _logger;
 
     public EventService(ProjectManagerContext context, IMapper mapper, UserManager<User> userManager, 
-        INotificationService notificationService, ILogger<EventService> logger)
+        INotificationService notificationService)
     {
         _context = context;
         _mapper = mapper;
         _userManager = userManager;
         _notificationService = notificationService;
-        _logger = logger;
     }
 
     public async Task<EventInfo> GetEventInfo(int eventId, string id)
@@ -131,7 +129,6 @@ public class EventService : IEventService
         }
 
         var currentUser = _userManager.FindByIdAsync(id).Result;
-        //await _notificationService.EventCreated(currentUser, newEvent);
 
         var currentEventUser = new EventUser()
         {
@@ -384,7 +381,6 @@ public class EventService : IEventService
             Task = taskForEvent
         };
 
-        
         _context.Events.Add(taskEvent);
         await _context.SaveChangesAsync();
         

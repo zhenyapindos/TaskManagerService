@@ -131,7 +131,6 @@ public class ProjectService : IProjectService
                 else
                 {
                     mappedTask.TaskStatus = (TaskStatus) Enum.TaskStatus.Done;
-                    //mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);   
                     mappedTask.Deadline = null;
                 }
 
@@ -222,7 +221,6 @@ public class ProjectService : IProjectService
 
         _context.ProjectUsers.Remove(resultUser);
         _context.TaskUsers.RemoveRange(taskUser);
-        //_context.EventUsers.Remove(_context.EventUsers.FirstOrDefault(x => x.User == resultUser.User)!);
         await _context.SaveChangesAsync();
 
         return (project, user);
@@ -400,7 +398,6 @@ public class ProjectService : IProjectService
             else
             {
                 mappedTask.TaskStatus = (TaskStatus) Enum.TaskStatus.Done;
-                //mappedTask.Deadline = task.StartDate!.Value.AddHours((double) task.DurationHours!);
                 mappedTask.Deadline = null;
             }
 

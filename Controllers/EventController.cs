@@ -16,19 +16,11 @@ namespace TaskService.Controllers;
 [Route("api/event/")]
 public class EventController : Controller
 {
-    private readonly ProjectManagerContext _context;
     private readonly IEventService _eventService;
-    private readonly UserManager<User> _userManager;
-    private readonly IMapper _mapper;
-    private readonly INotificationService _notificationService;
 
-    public EventController(ProjectManagerContext context, IEventService eventService, UserManager<User> userManager, IMapper mapper, INotificationService notificationService)
+    public EventController(IEventService eventService)
     {
-        _context = context;
         _eventService = eventService;
-        _userManager = userManager;
-        _mapper = mapper;
-        _notificationService = notificationService;
     }
 
     [Authorize]
