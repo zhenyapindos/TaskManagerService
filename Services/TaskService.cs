@@ -343,9 +343,20 @@ public class TaskService : ITaskService
             .Where(x => x.ParentTaskId! == taskId)
             .Include(x => x.Events);
         DeleteChildTasks(childTasks);
+        
+        var eventList = _context.Events.Where(x => x.EventType == EventType.TaskEvent && x.Task == task);
 
-        _context.RemoveRange(_context.Notifications.Where(x=> x.Task == task));
-        _context.RemoveRange(_context.Events.Where(x=> x.EventType == EventType.TaskEvent && x.Task == task));
+        foreach (var var in eventList)
+        {
+            var notifications = _context.Notifications.Where(x => x.Event == var);
+            
+            _context.RemoveRange(notifications);
+        }
+        var notificationList = _context.Notifications.Where(x => x.Task == task);
+        _context.RemoveRange(notificationList);
+        
+        _context.RemoveRange(eventList);
+
         _context.Remove(task);
 
         await _context.SaveChangesAsync();

@@ -6,21 +6,6 @@ namespace TaskService.Extensions;
 
 public static class ModelBuilderExtension
 {
-    /*public static ModelBuilder EventToTask(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Event>()
-            .HasOne(t => t.Task)
-            .WithMany(t => t.Events)
-            .HasForeignKey(e => e.Task)
-            .OnDelete(DeleteBehavior.NoAction);
-
-        modelBuilder.Entity<Task>()
-            .HasMany(t => t.Events)
-            .WithOne(t => t.Task)
-            .OnDelete(DeleteBehavior.NoAction);
-
-        return modelBuilder;
-    }*/
     public static ModelBuilder CommentToTask(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Comment>()

@@ -131,7 +131,7 @@ public class EventService : IEventService
         }
 
         var currentUser = _userManager.FindByIdAsync(id).Result;
-        await _notificationService.EventCreated(currentUser, newEvent);
+        //await _notificationService.EventCreated(currentUser, newEvent);
 
         var currentEventUser = new EventUser()
         {
@@ -384,9 +384,11 @@ public class EventService : IEventService
             Task = taskForEvent
         };
 
+        
         _context.Events.Add(taskEvent);
         await _context.SaveChangesAsync();
-
+        
+        await _notificationService.EventCreated(user, taskEvent);
         
         var newEventUser = new EventUser()
         {
