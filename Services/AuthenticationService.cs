@@ -15,15 +15,13 @@ public class AuthenticationService : IAuthenticationService
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _configuration;
-    private readonly ProjectManagerContext _context;
 
     public AuthenticationService(UserManager<User> userManager, SignInManager<User> signInManager,
-        IConfiguration configuration, ProjectManagerContext context)
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
-        _context = context;
     }
 
     public async Task<User> Register(RegisterRequest request)

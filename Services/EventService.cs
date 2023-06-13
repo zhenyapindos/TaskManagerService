@@ -257,7 +257,7 @@ public class EventService : IEventService
         var userList = _context.ProjectUsers.Include(x => x.User)
             .Where(x => x.Project.Calendar == calendar).Select(x => x.User).ToList();
 
-        if (!userList.All(x => x.UserName != addingUser.UserName))
+        if (userList.FirstOrDefault(x=> x.UserName == request.Username) == null)
         {
             throw new InvalidOperationException();
         }
@@ -324,7 +324,7 @@ public class EventService : IEventService
         var userList = _context.ProjectUsers.Include(x => x.User)
             .Where(x => x.Project.Calendar == calendar).Select(x => x.User).ToList();
 
-        if (!userList.All(x => x.UserName != deletingUser.UserName))
+        if (userList.FirstOrDefault(x=> x.UserName == request.Username) == null)
         {
             throw new InvalidOperationException();
         }
@@ -353,6 +353,7 @@ public class EventService : IEventService
 
         eventForUnassigment.EventUsers.Remove(eventUnassignedUser);
         _context.EventUsers.Remove(eventUnassignedUser);
+        _context.Events.Update(eventForUnassigment);
         await _context.SaveChangesAsync();
     }
 
